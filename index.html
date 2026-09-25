@@ -1,662 +1,812 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="font-size: 16px;">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LKPD Interaktif Sistem Komputer</title>
-    
-    <!-- Memuat Tailwind CSS untuk styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Mengatur Import Map untuk React dan Lucide Icons agar bisa di-import langsung di browser -->
-    <script type="importmap">
-    {
-        "imports": {
-            "react": "https://esm.sh/react@18.2.0",
-            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-            "lucide-react": "https://esm.sh/lucide-react@0.292.0"
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Komputer (Hardware) - Informatika Kelas X</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'], heading: ['Poppins', 'sans-serif'] },
+        colors: { brand: { blue: '#4f46e5', dark: '#0f172a', orange: '#f59e0b', light: '#f8fafc', accent: '#0ea5e9' } },
+        boxShadow: { 'soft': '0 10px 40px -10px rgba(0,0,0,0.05)', 'glow': '0 0 20px rgba(79, 70, 229, 0.4)' }
+      }
     }
-    </script>
-    
-    <!-- Memuat Babel untuk menerjemahkan kode React/JSX di browser -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Memuat html2pdf untuk fitur print PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
-    <style>
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-up {
-            animation: fadeInUp 0.4s ease-out forwards;
-        }
-    </style>
+  }
+</script>
+
+<style>
+  body { background-color: #f1f5f9; color: #334155; transition: font-size 0.3s ease; }
+  .section { display: none; opacity: 0; }
+  .section.active { display: block; animation: fadeScaleUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  @keyframes fadeScaleUp { from { opacity: 0; transform: translateY(15px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  .glass-panel { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+  .glass-sidebar { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); }
+  ::selection { background: #f59e0b; color: white; }
+  body.presentation-mode #sidebar { transform: translateX(-100%) !important; }
+  body.presentation-mode main { margin-left: 0 !important; }
+
+  /* ===== DEVICE CARD ===== */
+  .device-card { background: #fff; border-radius: 1rem; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all .3s ease; cursor: pointer; }
+  .device-card:hover { box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); transform: translateY(-4px); }
+  .device-visual { height: 140px; display: flex; align-items: center; justify-content: center; background: #fff; position: relative; overflow: hidden; padding: 10px; }
+  .device-visual img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; transition: transform .4s ease; }
+  .device-card:hover .device-visual img { transform: scale(1.08); }
+  .zoom-hint { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; background: rgba(79, 70, 229, 0.9); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; opacity: 0; transition: opacity .3s; z-index: 2; }
+  .device-card:hover .zoom-hint { opacity: 1; }
+
+  /* ===== LIGHTBOX ===== */
+  .lightbox-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(8px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; animation: fadeIn .3s ease; }
+  .lightbox-overlay.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .lightbox-content { background: #fff; border-radius: 2rem; max-width: 720px; width: 100%; max-height: 92vh; overflow-y: auto; position: relative; animation: scaleIn .4s cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  .lightbox-visual { height: 380px; display: flex; align-items: center; justify-content: center; background: #fff; border-radius: 2rem 2rem 0 0; position: relative; overflow: hidden; padding: 20px; border-bottom: 1px solid #f1f5f9; }
+  .lightbox-visual img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+  .lightbox-close { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; background: rgba(15, 23, 42, 0.8); color: white; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; border: none; transition: all .2s; z-index: 10; }
+  .lightbox-close:hover { background: #ef4444; transform: rotate(90deg); }
+  .lightbox-info { padding: 28px 32px 32px; }
+  .lightbox-info h3 { font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+  .lightbox-info .kategori-badge { display: inline-block; padding: 4px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 16px; text-transform: uppercase; }
+  .lightbox-info p { font-size: 15.5px; line-height: 1.7; color: #475569; }
+  .lightbox-tips { margin-top: 20px; padding: 16px 20px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 12px; font-size: 14px; color: #78350f; }
+  .lightbox-tips strong { color: #92400e; }
+  .lb-kat-input { background: #d1fae5; color: #065f46; }
+  .lb-kat-proses { background: #fef3c7; color: #92400e; }
+  .lb-kat-output { background: #dbeafe; color: #1e40af; }
+  .lb-kat-storage { background: #ede9fe; color: #6d28d9; }
+  .mini-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px; margin-top: 6px; text-transform: uppercase; }
+</style>
 </head>
-<body class="bg-slate-50">
-    
-    <!-- Di sinilah aplikasi React akan dimuat -->
-    <div id="root"></div>
+<body class="flex min-h-screen overflow-x-hidden antialiased">
 
-    <!-- Script Utama (Menggunakan type="text/babel" agar diterjemahkan oleh Babel) -->
-    <script type="text/babel" data-type="module">
-        import React, { useState } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import { Search, Monitor, Cpu, HardDrive, Keyboard as KeyboardIcon, CheckCircle, AlertTriangle, Play, GripVertical, FileText, User, Printer, Send, Image as ImageIcon, Target, ListChecks } from 'lucide-react';
+<button id="sidebar-toggle-btn" class="fixed top-4 left-4 z-[60] bg-brand-blue text-white w-12 h-12 rounded-xl shadow-glow flex items-center justify-center focus:outline-none hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95 group">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 group-[.open]:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden group-[.open]:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+</button>
 
-        const dataSkenario = [
-          { id: 1, masalah: "Printer tidak mengeluarkan kertas saat mencetak sertifikat.", perangkat: ["Keyboard", "Mouse", "Monitor", "CPU", "Printer", "HDD/SSD"] },
-          { id: 2, masalah: "Hasil scan dokumen tidak muncul di layar monitor.", perangkat: ["Scanner", "CPU", "Monitor", "Keyboard", "Mouse", "HDD/SSD"] },
-          { id: 3, masalah: "Suara tidak keluar saat memutar video presentasi.", perangkat: ["Keyboard", "Mouse", "Monitor", "Speaker", "CPU", "HDD/SSD"] },
-          { id: 4, masalah: "Webcam tidak terdeteksi saat video call.", perangkat: ["Keyboard", "Mouse", "Monitor", "Speaker", "Webcam", "CPU", "HDD/SSD"] },
-          { id: 5, masalah: "Game berjalan lambat dan patah-patah.", perangkat: ["Keyboard", "Mouse", "Monitor", "Gamepad", "GPU", "CPU", "RAM/SSD"] },
-          { id: 6, masalah: "Barcode tidak terbaca di mesin kasir.", perangkat: ["Barcode Scanner", "CPU", "Keyboard", "Mouse", "Monitor", "HDD/SSD"] },
-          { id: 7, masalah: "Garis gambar tidak muncul saat menggambar dengan digitizer.", perangkat: ["Digitizer", "CPU", "GPU", "Monitor", "Keyboard", "Mouse", "HDD/SSD"] },
-          { id: 8, masalah: "Plotter tidak mengeluarkan kertas desain ukuran besar.", perangkat: ["Plotter", "CPU", "Keyboard", "Mouse", "Monitor", "HDD/SSD"] },
-          { id: 9, masalah: "Proyektor menampilkan \"No Signal\" saat presentasi.", perangkat: ["Mouse", "CPU", "Proyektor", "Keyboard", "Monitor", "HDD/SSD"] },
-          { id: 10, masalah: "Data hilang setelah flashdisk dicabut.", perangkat: ["Flashdisk", "CPU", "Keyboard", "Mouse", "Monitor"] },
-          { id: 11, masalah: "Kartu memori tidak terbaca di komputer.", perangkat: ["Card Reader", "CPU", "Memory Card", "Monitor", "Mouse"] },
-          { id: 12, masalah: "DVD tidak terbaca saat ingin menonton film.", perangkat: ["CD/DVD Drive", "CPU", "GPU", "Speaker", "Monitor", "HDD/SSD"] },
-          { id: 13, masalah: "Hard disk eksternal tidak terdeteksi.", perangkat: ["External HDD", "CPU", "Monitor", "Keyboard", "Mouse"] },
-          { id: 14, masalah: "Printer jaringan tidak ditemukan saat mencetak.", perangkat: ["Network Storage", "HDD", "CPU", "Printer", "Keyboard", "Mouse", "Monitor"] },
-          { id: 15, masalah: "Light pen tidak menggerakkan kursor.", perangkat: ["Light Pen", "GPU", "Monitor", "HDD/SSD"] },
-          { id: 16, masalah: "Trackball tidak merespon saat digunakan.", perangkat: ["Trackball", "CPU", "Monitor", "HDD/SSD"] },
-          { id: 17, masalah: "Mesin absensi sidik jari gagal mengenali jari.", perangkat: ["Fingerprint Scanner", "CPU", "Monitor", "HDD/SSD"] },
-        ];
+<nav id="sidebar" class="fixed inset-y-0 left-0 w-72 glass-sidebar text-white z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-400 ease-in-out shadow-2xl flex flex-col border-r border-white/10">
+  <div class="pt-20 pb-8 px-8 border-b border-white/10 relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-32 h-32 bg-brand-blue rounded-full filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/4"></div>
+    <h1 class="font-heading font-bold text-2xl leading-tight text-white mb-2 relative z-10">Sistem<br><span class="text-brand-accent">Komputer</span></h1>
+    <p class="text-xs text-indigo-200 font-medium tracking-wider relative z-10">INFORMATIKA • KELAS X</p>
+  </div>
+  <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1" id="menu-container"></div>
+</nav>
 
-        const kategories = ["Input", "Proses", "Output", "Penyimpanan"];
+<main class="flex-1 lg:ml-72 min-h-screen flex flex-col relative bg-slate-50 transition-all duration-500 ease-in-out">
 
-        const deviceImages = {
-          "Keyboard": "https://images.unsplash.com/photo-1595225476474-87563907a212?w=400&q=80",
-          "Mouse": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&q=80",
-          "Monitor": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400&q=80",
-          "CPU": "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=400&q=80",
-          "Printer": "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=400&q=80",
-          "Scanner": "Scanner.png",
-          "Speaker": "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400&q=80",
-          "Webcam": "Webcam.png",
-          "GPU": "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=400&q=80",
-          "RAM/SSD": "RAM.png",
-          "HDD/SSD": "ssddanhdd.png",
-          "HDD": "https://images.unsplash.com/photo-1531492746076-161ca9bcad58?w=400&q=80",
-          "Gamepad": "Joystick.png",
-          "Barcode Scanner": "Scanner2.png",
-          "Digitizer": "Digitizer.png",
-          "Plotter": "Plotter.png",
-          "Proyektor": "Proyektor.png",
-          "Flashdisk": "Flashdisk.png",
-          "Card Reader": "Cardreader.png",
-          "Memory Card": "MemoryCard.png",
-          "CD/DVD Drive": "CDDVDdrive.png",
-          "External HDD": "External Hard Disk.png",
-          "Network Storage": "Networkstorage.png",
-          "Light Pen": "Lightpen.png",
-          "Trackball": "Trackball.png",
-          "Fingerprint Scanner": "fingerprint.png",
-        };
+  <div class="fixed top-4 right-4 z-50 flex items-center gap-1.5 glass-panel p-1.5 rounded-2xl">
+    <button onclick="togglePresentation()" class="w-9 h-9 rounded-xl bg-brand-orange/10 hover:bg-brand-orange hover:text-white text-brand-orange font-bold transition-all flex items-center justify-center" title="Mode Presentasi">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
+    </button>
+    <div class="w-px h-5 bg-slate-200 mx-1"></div>
+    <span class="text-[11px] font-bold text-slate-400 mx-2 hidden sm:block uppercase tracking-wider">Teks</span>
+    <button onclick="changeFontSize(-1)" class="w-9 h-9 rounded-xl bg-white/50 hover:bg-brand-blue hover:text-white text-slate-700 font-bold text-sm transition-all flex items-center justify-center">A-</button>
+    <button onclick="changeFontSize(0)" class="w-9 h-9 rounded-xl bg-white/50 hover:bg-brand-blue hover:text-white text-slate-700 font-bold text-sm transition-all flex items-center justify-center">A</button>
+    <button onclick="changeFontSize(1)" class="w-9 h-9 rounded-xl bg-white/50 hover:bg-brand-blue hover:text-white text-slate-700 font-bold text-base transition-all flex items-center justify-center">A+</button>
+  </div>
 
-        function LKPDSistemKomputer() {
-          const [kelompok, setKelompok] = useState("");
-          const [nama1, setNama1] = useState("");
-          const [nama2, setNama2] = useState("");
-          
-          const [pengertianSys, setPengertianSys] = useState("");
-          const [pengertianHW, setPengertianHW] = useState("");
-          const [tabelJenis, setTabelJenis] = useState({
-            Input: { fungsi: "", contoh: "" },
-            Proses: { fungsi: "", contoh: "" },
-            Output: { fungsi: "", contoh: "" },
-            Penyimpanan: { fungsi: "", contoh: "" }
-          });
+  <div class="w-full h-1.5 bg-slate-200 sticky top-0 z-30 overflow-hidden">
+    <div id="progress-bar" class="h-full bg-gradient-to-r from-brand-blue via-brand-accent to-brand-orange transition-all duration-700 ease-out w-0 rounded-r-full"></div>
+  </div>
 
-          const [masalahUtama, setMasalahUtama] = useState("");
-          const [analisis, setAnalisis] = useState({ p1: "", p2: "", s1: "", s2: "", dampak: "" });
-          
-          const [draggedDevices, setDraggedDevices] = useState({});
-          const [isFinished, setIsFinished] = useState(false);
-          const [isExporting, setIsExporting] = useState(false);
+  <div class="p-5 sm:p-8 lg:p-12 pb-32 max-w-5xl mx-auto w-full">
 
-          const activeScenario = dataSkenario.find(s => s.id === parseInt(kelompok));
+    <!-- s1: COVER -->
+    <section class="section active" id="s1">
+      <div class="bg-brand-dark rounded-[2.5rem] p-10 sm:p-16 text-white text-center shadow-2xl relative overflow-hidden">
+        <div class="absolute -top-32 -right-32 w-96 h-96 bg-brand-blue rounded-full blur-[100px] opacity-40"></div>
+        <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-brand-accent rounded-full blur-[100px] opacity-30"></div>
+        <div class="relative z-10">
+          <span class="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold tracking-widest text-indigo-200 mb-8 border border-white/10 uppercase">Informatika • SMKN 5 Yogyakarta</span>
+          <h1 class="font-heading text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-indigo-200">Sistem Komputer</h1>
+          <div class="w-20 h-1 bg-gradient-to-r from-brand-orange to-amber-300 mx-auto mb-8 rounded-full"></div>
+          <p class="text-2xl font-light mb-8 text-indigo-100">Perangkat Keras <span class="font-semibold text-white">(Hardware)</span></p>
+          <div class="max-w-2xl mx-auto mb-12"><p class="text-lg text-slate-300 leading-relaxed font-light">Memahami pengertian sistem komputer, perangkat keras, dan jenis-jenisnya berdasarkan fungsi Input, Proses, Output, dan Penyimpanan.</p></div>
+          <div class="inline-flex flex-col sm:flex-row gap-6 bg-white/5 backdrop-blur-lg rounded-3xl p-6 text-left border border-white/10 shadow-xl mx-auto">
+            <div><p class="text-xs text-indigo-300 uppercase tracking-wider mb-1">Guru Mapel</p><p class="font-medium text-white">Ema Humaera, S.Pd.</p></div>
+            <div class="hidden sm:block w-px bg-white/10"></div>
+            <div><p class="text-xs text-indigo-300 uppercase tracking-wider mb-1">Kelas/Semester</p><p class="font-medium text-white">X Keramik A / Ganjil</p></div>
+            <div class="hidden sm:block w-px bg-white/10"></div>
+            <div><p class="text-xs text-indigo-300 uppercase tracking-wider mb-1">Alokasi</p><p class="font-medium text-white">2 JP @90 menit</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-          const handleDragStart = (e, device) => {
-            e.dataTransfer.setData("device", device);
-          };
+    <!-- s2: APERSEPSI -->
+    <section class="section" id="s2">
+      <div class="mb-10"><div class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-semibold mb-4"><span class="text-lg">💭</span> Pengantar</div><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Apersepsi</h2><p class="text-slate-500 text-lg">Mengaitkan pengalaman nyata dengan materi yang akan dipelajari.</p></div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-3xl p-8 shadow-soft border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all"><div class="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl mb-6">🔍</div><h3 class="font-heading text-xl font-bold text-slate-800 mb-3">Amati Komputer di Depanmu</h3><p class="text-slate-600 leading-relaxed">Kalau komputer ini tiba-tiba tidak punya <strong class="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">keyboard</strong>, apakah masih bisa digunakan?</p></div>
+        <div class="bg-white rounded-3xl p-8 shadow-soft border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all"><div class="w-12 h-12 bg-sky-50 rounded-2xl flex items-center justify-center text-2xl mb-6">🔗</div><h3 class="font-heading text-xl font-bold text-slate-800 mb-3">Kaitkan dengan Materi Lalu</h3><p class="text-slate-600 leading-relaxed">Bagian mana saja yang membuat data bisa <em class="font-semibold text-sky-600">masuk, diolah, dan keluar</em>?</p></div>
+        <div class="bg-white rounded-3xl p-8 shadow-soft border border-slate-100 hover:shadow-lg hover:-translate-y-1 transition-all md:col-span-2"><div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-2xl mb-6">📱</div><h3 class="font-heading text-xl font-bold text-slate-800 mb-3">Kaitkan dengan Alat Sehari-hari</h3><p class="text-slate-600 leading-relaxed">Lihat smartphone di saku kalian. Apa yang terjadi jika <strong class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">tombol powernya rusak</strong> atau <strong class="text-amber-600 bg-amber-50 px-2 py-0.5 rounded">layarnya pecah</strong>?</p></div>
+      </div>
+    </section>
 
-          const handleDrop = (e, kategori) => {
-            e.preventDefault();
-            const device = e.dataTransfer.getData("device");
-            if (!device) return;
-            
-            setDraggedDevices(prev => ({
-              ...prev,
-              [device]: { kategori, alasan: prev[device]?.alasan || "" }
-            }));
-          };
+    <!-- s3: MOTIVASI -->
+    <section class="section" id="s3">
+      <div class="mb-10"><div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-semibold mb-4"><span class="text-lg">🔥</span> Semangat</div><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Motivasi</h2><p class="text-slate-500 text-lg">Mengapa materi ini penting untuk kehidupan dan masa depanmu.</p></div>
+      <div class="space-y-6">
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-3xl p-8 sm:p-10 shadow-sm border border-amber-100/50"><div class="flex items-start gap-5"><div class="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center text-2xl shrink-0">💡</div><div><h3 class="font-heading text-xl font-bold text-amber-900 mb-2">Bayangkan Alat di Rumahmu</h3><p class="text-amber-800/80 leading-relaxed text-lg">Kalau salah satu bagian alat rusak — misalnya <span class="bg-white/60 px-2 py-0.5 rounded font-semibold text-amber-700">remote TV tanpa baterai</span> — alat itu pasti tidak berfungsi optimal.</p></div></div></div>
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-3xl p-8 sm:p-10 shadow-sm border border-emerald-100/50"><div class="flex items-start gap-5"><div class="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center text-2xl shrink-0">🏺</div><div><h3 class="font-heading text-xl font-bold text-emerald-900 mb-2">Kaitan dengan Praktik Keramik</h3><p class="text-emerald-800/80 leading-relaxed text-lg">Saat membuat keramik dengan <strong>teknik pijat</strong>, butuh tangan, spons, dan alat ukir. Jika sponsnya hilang, keramik sulit dihaluskan.</p></div></div></div>
+        <div class="bg-white rounded-3xl p-8 sm:p-10 shadow-soft border-l-4 border-l-brand-blue border-y border-r border-slate-100"><div class="flex items-start gap-5"><div class="w-14 h-14 bg-indigo-50 rounded-full flex items-center justify-center text-2xl shrink-0">🌟</div><div><h3 class="font-heading text-xl font-bold text-slate-800 mb-2">Keterampilan Hidup</h3><p class="text-slate-600 leading-relaxed text-lg">Ini <span class="font-semibold text-brand-blue">bukan sekadar teori, tapi keterampilan hidup untuk dunia kerja</span>.</p></div></div></div>
+      </div>
+    </section>
 
-          const updateAlasan = (device, alasan) => {
-            setDraggedDevices(prev => ({
-              ...prev,
-              [device]: { ...prev[device], alasan }
-            }));
-          };
+    <!-- s4: TUJUAN -->
+    <section class="section" id="s4">
+      <div class="mb-10"><div class="inline-flex items-center gap-2 px-3 py-1 bg-sky-100 text-sky-700 rounded-full text-sm font-semibold mb-4"><span class="text-lg">🎓</span> Target</div><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Tujuan Pembelajaran</h2><p class="text-slate-500 text-lg">Setelah mengikuti pembelajaran ini, murid diharapkan mampu:</p></div>
+      <div class="bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden mb-8">
+        <div class="bg-slate-50 p-6 border-b border-slate-100 flex items-center gap-3"><div class="w-3 h-3 rounded-full bg-red-400"></div><div class="w-3 h-3 rounded-full bg-amber-400"></div><div class="w-3 h-3 rounded-full bg-green-400"></div><span class="ml-2 font-medium text-slate-500 text-sm tracking-widest uppercase">Indikator Pencapaian</span></div>
+        <div class="p-8 sm:p-10">
+          <ul class="space-y-8">
+            <li class="flex gap-5 items-start group"><span class="flex-shrink-0 w-12 h-12 bg-indigo-50 text-brand-blue rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-brand-blue group-hover:text-white transition-colors">1</span><div><p class="text-lg leading-relaxed text-slate-700 mb-2"><strong>Murid mampu menjelaskan</strong> pengertian sistem komputer dan perangkat keras setelah menyimak pemaparan materi dengan tepat.</p><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Level: C2 (Memahami)</span></div></li>
+            <li class="flex gap-5 items-start group"><span class="flex-shrink-0 w-12 h-12 bg-indigo-50 text-brand-blue rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-brand-blue group-hover:text-white transition-colors">2</span><div><p class="text-lg leading-relaxed text-slate-700 mb-2"><strong>Murid mampu mengklasifikasikan</strong> jenis perangkat keras berdasarkan fungsi input, proses, output, dan penyimpanan melalui pengamatan dengan tepat.</p><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Level: C3 (Mengaplikasikan)</span></div></li>
+            <li class="flex gap-5 items-start group"><span class="flex-shrink-0 w-12 h-12 bg-indigo-50 text-brand-blue rounded-2xl flex items-center justify-center font-bold text-xl group-hover:bg-brand-blue group-hover:text-white transition-colors">3</span><div><p class="text-lg leading-relaxed text-slate-700 mb-2"><strong>Murid mampu menganalisis</strong> peran perangkat keras dalam kehidupan sehari-hari melalui studi kasus dengan tepat disertai alasan yang logis.</p><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">Level: C4 (Menganalisis)</span></div></li>
+          </ul>
+        </div>
+      </div>
+      <div class="bg-slate-900 rounded-3xl p-8 sm:p-10 text-white relative overflow-hidden">
+        <div class="absolute right-0 top-0 opacity-10 text-9xl transform translate-x-1/4 -translate-y-1/4">📌</div>
+        <h3 class="font-heading text-xl font-bold mb-6 relative z-10 text-indigo-200">Topik Pembelajaran Hari Ini</h3>
+        <ul class="space-y-4 text-lg text-slate-300 relative z-10">
+          <li class="flex items-center gap-3"><svg class="w-5 h-5 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Pengertian Sistem Komputer</li>
+          <li class="flex items-center gap-3"><svg class="w-5 h-5 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Pengertian Perangkat Keras (Hardware)</li>
+          <li class="flex items-center gap-3"><svg class="w-5 h-5 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Klasifikasi Fungsi (Input, Proses, Output, Penyimpanan)</li>
+        </ul>
+      </div>
+    </section>
 
-          const handleRemoveDevice = (device) => {
-            setDraggedDevices(prev => {
-              const newData = { ...prev };
-              delete newData[device];
-              return newData;
-            });
-          };
+    <!-- s5: STUDI KASUS -->
+    <section class="section" id="s5">
+      <div class="mb-10"><div class="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold mb-4"><span class="text-lg">🎬</span> Problem Based Learning</div><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Studi Kasus</h2><p class="text-slate-500 text-lg">Amati, renungkan, dan diskusikan skenario ini sebagai pemantik.</p></div>
+      <div class="bg-white p-3 rounded-[2rem] shadow-soft border border-slate-100 mb-10"><div class="relative w-full overflow-hidden rounded-[1.5rem] bg-slate-900 aspect-video"><iframe class="absolute top-0 left-0 w-full h-full border-0" src="https://www.youtube.com/embed/2zCzGoMRQNQ?rel=0" title="Video Sistem Komputer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div>
+      <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden mb-10 shadow-sm">
+        <div class="bg-brand-orange text-white px-6 py-3 font-bold tracking-widest text-sm flex items-center justify-between"><span>SKENARIO PEMANTIK</span><span>🖨️</span></div>
+        <div class="p-8 sm:p-10"><h4 class="font-heading text-2xl font-bold text-slate-800 mb-6">"Sertifikat yang Tak Kunjung Tercetak"</h4>
+          <div class="text-lg text-slate-600 space-y-5 leading-relaxed">
+            <p>Hari ini adalah hari terakhir lomba desain keramik di sekolah. Bu Ema ingin segera mencetak <strong>30 sertifikat</strong>. Ia sudah menyiapkan desain di komputer dengan rapi.</p>
+            <p>Ketika menekan tombol <strong class="bg-slate-100 px-2 py-1 rounded text-slate-800 border border-slate-200">Print</strong>, muncul pesan error: <em class="text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded">"Printer not found."</em></p>
+            <p>Ia memeriksa printer — <strong>lampu indikator menyala</strong>, kertas <strong>masih banyak</strong>. Namun, ternyata <strong class="text-brand-orange underline decoration-2 underline-offset-4">kabel printer tidak terhubung ke komputer</strong>.</p>
+            <div class="bg-orange-50/50 p-6 rounded-2xl border border-orange-100 mt-6 text-amber-900 italic">Bu Ema bingung — mengapa printer yang menyala dan ada kertasnya tetap tidak bisa mencetak?</div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-indigo-50/50 rounded-3xl p-8 sm:p-10 border border-indigo-100/50">
+        <h3 class="font-heading text-xl font-bold text-indigo-950 mb-3">❓ Pertanyaan Diskusi Cepat</h3>
+        <p class="text-indigo-800/70 mb-8">Diskusikan dengan teman sebangku. <strong class="text-indigo-600">Tuliskan dugaan sementara kalian.</strong></p>
+        <div class="space-y-4">
+          <div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm flex gap-5 items-start"><span class="flex-shrink-0 w-8 h-8 bg-brand-blue text-white rounded-full flex items-center justify-center font-bold text-sm">1</span><p class="text-lg text-slate-700">Menurut kalian, apa <strong>penyebab utama</strong> printer Bu Ema tidak merespon perintah cetak?</p></div>
+          <div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm flex gap-5 items-start"><span class="flex-shrink-0 w-8 h-8 bg-brand-blue text-white rounded-full flex items-center justify-center font-bold text-sm">2</span><p class="text-lg text-slate-700">Dalam sistem ini, apa <strong>peran masing-masing</strong> dari Komputer, Printer, dan Kabel?</p></div>
+          <div class="bg-white p-6 rounded-2xl border border-indigo-100 shadow-sm flex gap-5 items-start"><span class="flex-shrink-0 w-8 h-8 bg-brand-blue text-white rounded-full flex items-center justify-center font-bold text-sm">3</span><p class="text-lg text-slate-700">Apakah printer bisa bekerja <strong>sendiri</strong> tanpa komputer? Mengapa?</p></div>
+        </div>
+      </div>
+    </section>
 
-          const handlePrintPDF = () => {
-            setIsExporting(true);
-            setTimeout(() => {
-              const element = document.getElementById('print-area');
-              
-              const originalStyle = element.getAttribute('style');
-              const targetWidth = 900; 
-              element.style.width = `${targetWidth}px`;
-              element.style.maxWidth = `${targetWidth}px`;
-              element.style.margin = '0'; 
-              
-              const targetHeight = element.offsetHeight;
-              
-              const opt = {
-                margin:       0, 
-                filename:     `LKPD_Informatika_Kelompok_${kelompok || 'X'}.pdf`,
-                image:        { type: 'jpeg', quality: 1.0 },
-                html2canvas:  { 
-                  scale: 2, 
-                  useCORS: true, 
-                  logging: false, 
-                  windowWidth: targetWidth, 
-                  width: targetWidth,       
-                  scrollY: 0, 
-                  scrollX: 0
-                },
-                jsPDF:        { 
-                  unit: 'px', 
-                  format: [targetWidth, targetHeight], 
-                  orientation: 'portrait',
-                  hotfixes: ["px_scaling"] 
-                }
-              };
+    <!-- s6: PENGERTIAN SISTEM KOMPUTER -->
+    <section class="section" id="s6">
+      <div class="mb-10"><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Pengertian Sistem Komputer</h2><p class="text-slate-500 text-lg">Konsep dasar bagaimana komputer bekerja sebagai sebuah sistem.</p></div>
+      <div class="bg-white rounded-3xl p-8 sm:p-10 shadow-soft border border-slate-100 mb-10 text-center"><p class="text-2xl leading-relaxed text-slate-700 font-light max-w-3xl mx-auto">"Kumpulan perangkat komputer yang saling <strong class="text-brand-blue font-semibold">berhubungan</strong> dan <strong class="text-brand-accent font-semibold">berinteraksi</strong> untuk melakukan proses pengolahan data menjadi informasi."</p></div>
+      <h3 class="font-heading text-2xl font-bold text-slate-800 mb-6">3 Komponen Utama</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm hover:shadow-lg hover:-translate-y-2 transition-all"><div class="w-20 h-20 mx-auto bg-indigo-50 rounded-full flex items-center justify-center text-4xl mb-6">🔧</div><h4 class="font-heading text-xl font-bold text-slate-800 mb-3">Hardware</h4><p class="text-slate-500 leading-relaxed">Perangkat Keras — bagian fisik yang dapat dilihat dan disentuh langsung.</p></div>
+        <div class="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm hover:shadow-lg hover:-translate-y-2 transition-all"><div class="w-20 h-20 mx-auto bg-sky-50 rounded-full flex items-center justify-center text-4xl mb-6">💿</div><h4 class="font-heading text-xl font-bold text-slate-800 mb-3">Software</h4><p class="text-slate-500 leading-relaxed">Perangkat Lunak — program atau instruksi yang menjalankan perangkat keras.</p></div>
+        <div class="bg-white border border-slate-100 rounded-3xl p-8 text-center shadow-sm hover:shadow-lg hover:-translate-y-2 transition-all"><div class="w-20 h-20 mx-auto bg-amber-50 rounded-full flex items-center justify-center text-4xl mb-6">👤</div><h4 class="font-heading text-xl font-bold text-slate-800 mb-3">Brainware</h4><p class="text-slate-500 leading-relaxed">Pengguna — manusia yang mengoperasikan dan mengendalikan komputer.</p></div>
+      </div>
+      <div class="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-8 sm:p-10 text-white shadow-lg relative overflow-hidden">
+        <div class="absolute right-0 bottom-0 opacity-10 text-9xl transform translate-x-1/4 translate-y-1/4">🚲</div>
+        <h3 class="font-heading text-xl font-bold mb-6 relative z-10">Analogi: Sistem Komputer itu Seperti Sepeda</h3>
+        <ul class="space-y-4 text-lg text-emerald-50 relative z-10">
+          <li class="flex items-start gap-3"><span class="mt-1 w-2 h-2 rounded-full bg-white shrink-0"></span><p><strong class="text-white">Hardware</strong> = rangka, roda, pedal (bagian fisik).</p></li>
+          <li class="flex items-start gap-3"><span class="mt-1 w-2 h-2 rounded-full bg-white shrink-0"></span><p><strong class="text-white">Software</strong> = teknik mengayuh dan aturan berkendara.</p></li>
+          <li class="flex items-start gap-3"><span class="mt-1 w-2 h-2 rounded-full bg-white shrink-0"></span><p><strong class="text-white">Brainware</strong> = kamu yang mengendarai sepeda.</p></li>
+        </ul>
+        <div class="mt-8 bg-black/20 p-5 rounded-2xl font-medium text-lg relative z-10 backdrop-blur-sm">💡 Tanpa salah satu komponen, sepeda tidak bisa digunakan. Begitu juga komputer.</div>
+      </div>
+    </section>
 
-              const finishExport = () => {
-                if (originalStyle !== null) {
-                  element.setAttribute('style', originalStyle);
-                } else {
-                  element.removeAttribute('style');
-                }
-                setIsExporting(false);
-              };
+    <!-- s7: ALUR I-P-O-P -->
+    <section class="section" id="s7">
+      <div class="mb-10"><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Alur I - P - O - P</h2><p class="text-slate-500 text-lg">Bagaimana perjalanan data di dalam sistem komputer.</p></div>
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-2 my-16 max-w-4xl mx-auto">
+        <div class="bg-white border border-emerald-100 shadow-soft p-6 rounded-3xl text-center w-full md:w-48 group hover:-translate-y-2 transition-all"><div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full mx-auto mb-3 flex items-center justify-center font-bold">1</div><div class="font-heading font-bold text-xl text-emerald-900 mb-1">INPUT</div><div class="text-sm font-medium text-emerald-600/70">Masukan</div></div>
+        <div class="text-slate-300 w-8 h-8 md:w-16 md:h-2 bg-slate-200 md:rounded-full hidden md:block"></div>
+        <div class="text-3xl text-slate-300 md:hidden">↓</div>
+        <div class="bg-white border border-amber-100 shadow-soft p-6 rounded-3xl text-center w-full md:w-48 group hover:-translate-y-2 transition-all"><div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-full mx-auto mb-3 flex items-center justify-center font-bold">2</div><div class="font-heading font-bold text-xl text-amber-900 mb-1">PROSES</div><div class="text-sm font-medium text-amber-600/70">Pengolahan</div></div>
+        <div class="text-slate-300 w-8 h-8 md:w-16 md:h-2 bg-slate-200 md:rounded-full hidden md:block"></div>
+        <div class="text-3xl text-slate-300 md:hidden">↓</div>
+        <div class="bg-white border border-blue-100 shadow-soft p-6 rounded-3xl text-center w-full md:w-48 group hover:-translate-y-2 transition-all"><div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full mx-auto mb-3 flex items-center justify-center font-bold">3</div><div class="font-heading font-bold text-xl text-blue-900 mb-1">OUTPUT</div><div class="text-sm font-medium text-blue-600/70">Keluaran</div></div>
+        <div class="text-slate-300 w-8 h-8 md:w-16 md:h-2 bg-slate-200 md:rounded-full hidden md:block"></div>
+        <div class="text-3xl text-slate-300 md:hidden">↓</div>
+        <div class="bg-white border border-purple-100 shadow-soft p-6 rounded-3xl text-center w-full md:w-48 group hover:-translate-y-2 transition-all"><div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full mx-auto mb-3 flex items-center justify-center font-bold">4</div><div class="font-heading font-bold text-xl text-purple-900 mb-1">SIMPAN</div><div class="text-sm font-medium text-purple-600/70">Storage</div></div>
+      </div>
+      <div class="bg-white rounded-3xl p-8 sm:p-10 shadow-soft border border-slate-100">
+        <h3 class="font-heading text-xl font-bold text-slate-800 mb-6">Contoh Aplikasi Nyata: Mengetik Dokumen</h3>
+        <div class="text-lg text-slate-600 leading-relaxed space-y-4">
+          <p class="flex items-center gap-3"><span class="w-3 h-3 rounded-full bg-emerald-400 shrink-0"></span> Kamu mengetik di <strong class="text-emerald-600">Keyboard</strong> (Input).</p>
+          <p class="flex items-center gap-3"><span class="w-3 h-3 rounded-full bg-amber-400 shrink-0"></span> <strong class="text-amber-600">CPU</strong> mengolah ketikanmu (Proses).</p>
+          <p class="flex items-center gap-3"><span class="w-3 h-3 rounded-full bg-blue-400 shrink-0"></span> Hasil tulisan muncul di <strong class="text-blue-600">Monitor</strong> (Output).</p>
+          <p class="flex items-center gap-3"><span class="w-3 h-3 rounded-full bg-purple-400 shrink-0"></span> Kamu menyimpan file di <strong class="text-purple-600">Hardisk/SSD</strong> (Simpan).</p>
+        </div>
+      </div>
+    </section>
 
-              if (window.html2pdf) {
-                window.html2pdf().set(opt).from(element).save().then(finishExport).catch(err => {
-                  console.error("Gagal export PDF", err);
-                  finishExport();
-                  window.print(); 
-                });
-              } else {
-                finishExport();
-                window.print();
-              }
-            }, 500);
-          };
-
-          if (isFinished) {
-            return (
-              <div className="min-h-screen bg-slate-100 p-2 md:p-6 font-sans text-slate-800 print:bg-white print:p-0">
-                <div id="print-area" className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 print:shadow-none print:border-none print:rounded-none [print-color-adjust:exact]">
-                  
-                  <div className="bg-gradient-to-r from-teal-600 to-indigo-700 py-3 px-6 text-white text-center">
-                    <h1 className="text-2xl font-bold uppercase tracking-wider mb-0.5 drop-shadow-md">Ringkasan LKPD</h1>
-                    <p className="text-teal-100 text-sm font-medium">Sistem Komputer - Perangkat Keras</p>
-                  </div>
-                  
-                  <div className="p-5 md:p-6 space-y-4">
-                    
-                    {/* Tujuan & Petunjuk Ringkas di PDF */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:break-inside-avoid">
-                      <div className="bg-white p-4 rounded-xl border border-teal-200 shadow-sm flex flex-col justify-center">
-                        <h2 className="text-sm font-bold text-teal-800 mb-2 border-b-2 border-teal-200 pb-1 inline-block w-max">A. Tujuan Pembelajaran</h2>
-                        <ul className="list-decimal ml-4 space-y-1 text-slate-700 text-xs">
-                          <li>Menjelaskan pengertian sistem komputer dan perangkat keras. (C2)</li>
-                          <li>Mengklasifikasikan perangkat keras berdasarkan fungsi. (C3)</li>
-                          <li>Menganalisis peran perangkat keras dalam studi kasus. (C4)</li>
-                        </ul>
-                      </div>
-                      <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-sm flex flex-col justify-center">
-                        <h2 className="text-sm font-bold text-amber-800 mb-2 border-b-2 border-amber-200 pb-1 inline-block w-max">B. Petunjuk Pengerjaan</h2>
-                        <ul className="list-decimal ml-4 space-y-1 text-slate-700 text-xs">
-                          <li>Kerjakan secara berkelompok (2 orang).</li>
-                          <li>Pilih nomor kelompok, isi bagian A, B, dan C.</li>
-                          <li>scannerand drop perangkat ke kategori yang tepat.</li>
-                          <li>Presentasikan hasil kerja kelompok.</li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Baris 1: Identitas (Kiri) & Masalah (Kanan) */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      
-                      <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm print:break-inside-avoid flex flex-col justify-center">
-                        <h2 className="text-sm font-bold text-indigo-800 mb-2 border-b-2 border-indigo-200 pb-1 inline-block w-max">Identitas Kelompok</h2>
-                        <p className="font-bold text-lg text-indigo-950 mt-1">Kelompok {kelompok}</p>
-                        <p className="text-sm text-indigo-900 mt-1 font-medium">{nama1 || 'Nama 1'} & {nama2 || 'Nama 2'}</p>
-                      </div>
-
-                      <div className="md:col-span-2 bg-amber-50 p-4 rounded-xl border border-amber-100 shadow-sm print:break-inside-avoid">
-                        <h2 className="text-sm font-bold text-amber-800 mb-2 border-b-2 border-amber-200 pb-1 inline-block w-max">Skenario & Masalah Utama</h2>
-                        <div className="bg-white p-2.5 rounded-lg mb-2 border border-amber-200 border-l-4 border-l-amber-500 shadow-sm">
-                          <p className="italic text-sm text-slate-800 font-medium">"{activeScenario?.masalah}"</p>
-                        </div>
-                        <div className="bg-white p-2.5 rounded-lg border border-amber-200 shadow-sm flex items-start gap-2">
-                          <AlertTriangle size={16} className="text-amber-600 mt-0.5 shrink-0"/>
-                          <div>
-                            <p className="text-xs font-bold text-amber-900">Masalah Utama:</p>
-                            <p className="text-sm text-slate-700">{masalahUtama || "-"}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                    </div>
-
-                    {/* Baris 2: Pemahaman Dasar */}
-                    <div className="bg-sky-50 p-4 rounded-xl border border-sky-100 shadow-sm print:break-inside-avoid">
-                      <h2 className="text-sm font-bold text-sky-800 mb-3 border-b-2 border-sky-200 pb-1 inline-block w-max">Bagian A: Pemahaman Dasar</h2>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="bg-white p-3 rounded-lg border border-sky-100 shadow-sm">
-                          <p className="font-bold text-sky-900 mb-1 text-xs">Sistem Komputer:</p>
-                          <p className="text-slate-700 text-sm leading-relaxed">{pengertianSys || "-"}</p>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg border border-sky-100 shadow-sm">
-                          <p className="font-bold text-sky-900 mb-1 text-xs">Perangkat Keras (Hardware):</p>
-                          <p className="text-slate-700 text-sm leading-relaxed">{pengertianHW || "-"}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {kategories.map(kat => (
-                          <div key={kat} className="bg-white p-3 rounded-lg border border-sky-200 shadow-sm relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-sky-400"></div>
-                            <span className="font-bold text-sky-800 text-sm mb-2 border-b border-sky-50 pb-1 flex items-center gap-1.5">
-                              <CheckCircle size={14} className="text-sky-500"/> {kat}
-                            </span>
-                            <p className="text-xs text-slate-700 mb-1 leading-tight"><span className="font-bold text-slate-900">Fungsi:</span> {tabelJenis[kat]?.fungsi || "-"}</p>
-                            <p className="text-xs text-slate-700 leading-tight"><span className="font-bold text-slate-900">Contoh:</span> {tabelJenis[kat]?.contoh || "-"}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Baris 3: Perangkat Terlibat */}
-                    <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm print:break-inside-avoid">
-                      <h2 className="text-sm font-bold text-emerald-800 mb-3 border-b-2 border-emerald-200 pb-1 inline-block w-max">Bagian B: Klasifikasi Perangkat Terlibat</h2>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {activeScenario?.perangkat.filter(device => draggedDevices[device]).map(device => (
-                          <div key={device} className="bg-white p-3 rounded-xl border border-emerald-200 shadow-sm flex flex-col gap-2.5">
-                            <div className="flex items-center gap-3 border-b border-emerald-50 pb-2">
-                              <img 
-                                src={deviceImages[device] || `https://placehold.co/100x100/e2e8f0/475569?text=${device}`} 
-                                alt={device} 
-                                crossOrigin="anonymous"
-                                className="w-12 h-12 object-cover rounded-lg shadow-sm border border-slate-200 shrink-0" 
-                              />
-                              <div>
-                                <h3 className="font-bold text-emerald-900 text-sm leading-tight">{device}</h3> 
-                                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold mt-1 inline-block shadow-sm">
-                                  {draggedDevices[device]?.kategori || '-'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 flex-grow">
-                              <p className="text-xs text-slate-700 leading-relaxed"><span className="font-bold text-slate-800 block mb-0.5">Alasan:</span> {draggedDevices[device]?.alasan || "-"}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Baris 4: Analisis & Solusi */}
-                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm print:break-inside-avoid">
-                      <h2 className="text-sm font-bold text-blue-800 mb-3 border-b-2 border-blue-200 pb-1 inline-block w-max">Bagian C: Analisis & Pemecahan Masalah</h2>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white p-3.5 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden">
-                          <div className="absolute top-0 left-0 w-full h-1 bg-blue-400"></div>
-                          <p className="font-bold text-blue-900 mb-2 text-xs flex items-center gap-1.5"><AlertTriangle size={14}/> Kemungkinan Penyebab:</p>
-                          <ul className="list-decimal ml-4 space-y-1 text-slate-700 text-xs font-medium">
-                            <li>{analisis.p1 || "-"}</li>
-                            <li>{analisis.p2 || "-"}</li>
-                          </ul>
-                        </div>
-                        <div className="bg-white p-3.5 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden">
-                          <div className="absolute top-0 left-0 w-full h-1 bg-green-400"></div>
-                          <p className="font-bold text-blue-900 mb-2 text-xs flex items-center gap-1.5"><CheckCircle size={14}/> Langkah Solusi:</p>
-                          <ul className="list-decimal ml-4 space-y-1 text-slate-700 text-xs font-medium">
-                            <li>{analisis.s1 || "-"}</li>
-                            <li>{analisis.s2 || "-"}</li>
-                          </ul>
-                        </div>
-                        <div className="bg-white p-3.5 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden">
-                           <div className="absolute top-0 left-0 w-full h-1 bg-red-400"></div>
-                          <p className="font-bold text-blue-900 mb-2 text-xs">Dampak Jika Perangkat Tidak Ada:</p>
-                          <p className="text-slate-700 text-xs leading-relaxed font-medium">{analisis.dampak || "-"}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {isExporting ? (
-                  <div className="mt-8 mb-10 flex justify-center text-teal-600 font-bold text-base md:text-xl items-center gap-3 bg-white p-5 rounded-2xl shadow border border-teal-100 max-w-2xl mx-auto animate-pulse">
-                    <Monitor size={28} className="animate-bounce" /> Menyusun dokumen ke dalam 1 lembar PDF...
-                  </div>
-                ) : (
-                  <div className="mt-8 mb-10 flex flex-wrap justify-center gap-4 no-print max-w-4xl mx-auto">
-                    <button 
-                      onClick={handlePrintPDF}
-                      className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 text-sm md:text-base transform hover:scale-105 border-b-4 border-slate-950"
-                    >
-                      <Printer size={22} /> Download PDF (1 Lembar)
-                    </button>
-                    <button 
-                      onClick={() => window.open("https://drive.google.com/drive/folders/1c6PJMAi4DsZYDRe-hCPba2ePqeEVQiBV?usp=drive_link", "_blank")}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 text-sm md:text-base transform hover:scale-105 border-b-4 border-indigo-800"
-                    >
-                      <Send size={22} /> Kirim ke G-Drive
-                    </button>
-                    <button 
-                      onClick={() => setIsFinished(false)}
-                      className="bg-white hover:bg-slate-100 text-slate-700 px-5 py-4 rounded-xl font-bold transition-all shadow border-2 border-slate-200 flex items-center gap-2 text-sm md:text-base transform hover:scale-105"
-                    >
-                      Kembali Edit
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          }
-
-          return (
-            <div className="min-h-screen bg-slate-50 pb-28 font-sans text-slate-800">
-              <header className="bg-gradient-to-r from-teal-500 to-indigo-600 shadow-lg text-white py-12 px-4 relative overflow-hidden">
-                <div className="max-w-5xl mx-auto relative z-10 text-center">
-                  <h1 className="text-4xl md:text-5xl font-extrabold mb-4 drop-shadow-md">LKPD INTERAKTIF</h1>
-                  <h2 className="text-xl md:text-2xl font-medium text-teal-100">Sistem Komputer - Perangkat Keras (SMK)</h2>
-                </div>
-              </header>
-
-              <main className="max-w-5xl mx-auto px-4 -mt-6 space-y-8 relative z-20">
-                
-                {/* --- BAGIAN BARU: Tujuan Pembelajaran & Petunjuk Pengerjaan --- */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up">
-                    {/* Tujuan Pembelajaran */}
-                    <section className="bg-white rounded-3xl shadow-lg p-5 md:p-6 border-t-4 border-teal-500 flex flex-col justify-start">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="bg-teal-100 p-2 rounded-lg text-teal-600"><Target size={20}/></div>
-                            <h3 className="text-xl font-bold text-slate-800">A. Tujuan Pembelajaran</h3>
-                        </div>
-                        <ol className="list-decimal ml-5 space-y-2 text-slate-700 text-sm">
-                            <li>Murid mampu menjelaskan pengertian sistem komputer dan perangkat keras setelah menyimak video dan pemaparan materi dengan tepat. <span className="font-semibold text-teal-600">(C2-Menjelaskan)</span></li>
-                            <li>Murid mampu mengklasifikasikan jenis perangkat keras berdasarkan fungsi input, proses, output, dan penyimpanan melalui perangkat di laboratorium dengan tepat. <span className="font-semibold text-teal-600">(C3-Mengklasifikasikan)</span></li>
-                            <li>Murid mampu menganalisis peran perangkat keras dalam kehidupan sehari-hari melalui studi kasus dengan tepat disertai alasan yang logis. <span className="font-semibold text-teal-600">(C4-Menganalisis)</span></li>
-                        </ol>
-                    </section>
-
-                    {/* Petunjuk Pengerjaan */}
-                    <section className="bg-white rounded-3xl shadow-lg p-5 md:p-6 border-t-4 border-amber-500 flex flex-col justify-start">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="bg-amber-100 p-2 rounded-lg text-amber-600"><ListChecks size={20}/></div>
-                            <h3 className="text-xl font-bold text-slate-800">B. Petunjuk Pengerjaan</h3>
-                        </div>
-                        <ol className="list-decimal ml-5 space-y-2 text-slate-700 text-sm">
-                            <li>Kerjakan secara berkelompok (2 orang).</li>
-                            <li>Pilih nomor kelompok pada sistem LKPD digital.</li>
-                            <li>Sistem akan menampilkan skenario masalah kelompokmu.</li>
-                            <li>Isi bagian A (Pengertian), B (Masalah), dan C (Analisis).</li>
-                            <li>Drag and drop perangkat ke kategori yang tepat.</li>
-                            <li>Setelah selesai, presentasikan singkat 2 menit per kelompok.</li>
-                            <li className="font-bold text-red-500">Dilarang mencari jawaban di internet atau AI.</li>
-                        </ol>
-                    </section>
-                </div>
-                {/* --- AKHIR BAGIAN BARU --- */}
-
-                {/* Identitas Kelompok */}
-                <section className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border-t-4 border-teal-500 animate-fade-in-up">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-teal-100 p-3 rounded-xl text-teal-600"><User size={24}/></div>
-                    <h3 className="text-2xl font-bold text-slate-800">Identitas Kelompok</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-600 mb-2">Pilih Nomor Kelompok</label>
-                      <select 
-                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-3.5 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all font-semibold cursor-pointer"
-                        value={kelompok} 
-                        onChange={(e) => {
-                          setKelompok(e.target.value);
-                          setDraggedDevices({}); 
-                        }}
-                      >
-                        <option value="">-- Pilih Kelompok --</option>
-                        {dataSkenario.map(s => (
-                          <option key={s.id} value={s.id}>Kelompok {s.id}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-600 mb-2">Nama Anggota 1</label>
-                      <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Masukkan nama..." value={nama1} onChange={(e) => setNama1(e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-600 mb-2">Nama Anggota 2</label>
-                      <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 focus:ring-2 focus:ring-teal-500 outline-none" placeholder="Masukkan nama..." value={nama2} onChange={(e) => setNama2(e.target.value)} />
-                    </div>
-                  </div>
-                </section>
-
-                {/* Bagian A */}
-                <section className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border-t-4 border-indigo-500 animate-fade-in-up">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-indigo-100 p-3 rounded-xl text-indigo-600"><FileText size={24}/></div>
-                    <h3 className="text-2xl font-bold text-slate-800">Bagian A: Pengertian & Klasifikasi</h3>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-2 text-lg">1. Apa itu Sistem Komputer?</label>
-                      <textarea rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Tuliskan pemahamanmu..." value={pengertianSys} onChange={(e) => setPengertianSys(e.target.value)}></textarea>
-                    </div>
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-2 text-lg">2. Apa itu Perangkat Keras (Hardware)?</label>
-                      <textarea rows="2" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Tuliskan pemahamanmu..." value={pengertianHW} onChange={(e) => setPengertianHW(e.target.value)}></textarea>
-                    </div>
-                    
-                    <div className="pt-4">
-                      <label className="block font-bold text-slate-700 mb-4 text-lg">3. Lengkapi Tabel Fungsi & Contoh Perangkat</label>
-                      <div className="overflow-x-auto rounded-xl border border-slate-200">
-                        <table className="w-full text-left border-collapse min-w-[600px]">
-                          <thead>
-                            <tr className="bg-slate-100">
-                              <th className="p-4 font-bold text-slate-700 border-b border-slate-200 w-1/4">Jenis Perangkat</th>
-                              <th className="p-4 font-bold text-slate-700 border-b border-slate-200 w-1/2">Fungsi</th>
-                              <th className="p-4 font-bold text-slate-700 border-b border-slate-200 w-1/4">Contoh</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {kategories.map((kat, idx) => (
-                              <tr key={kat} className={idx % 2 === 0 ? "bg-white" : "bg-slate-50"}>
-                                <td className="p-4 border-b border-slate-100 font-bold text-indigo-700">{kat}</td>
-                                <td className="p-4 border-b border-slate-100">
-                                  <input type="text" className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500" placeholder={`Fungsi ${kat}...`} value={tabelJenis[kat].fungsi} onChange={(e) => setTabelJenis(prev => ({...prev, [kat]: {...prev[kat], fungsi: e.target.value}}))} />
-                                </td>
-                                <td className="p-4 border-b border-slate-100">
-                                  <input type="text" className="w-full bg-white border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500" placeholder={`Contoh ${kat}...`} value={tabelJenis[kat].contoh} onChange={(e) => setTabelJenis(prev => ({...prev, [kat]: {...prev[kat], contoh: e.target.value}}))} />
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Bagian B (Skenario) */}
-                <section className={`bg-white rounded-3xl shadow-lg p-6 md:p-8 border-t-4 border-amber-500 transition-opacity duration-500 ${!activeScenario ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-amber-100 p-3 rounded-xl text-amber-600"><Monitor size={24}/></div>
-                    <h3 className="text-2xl font-bold text-slate-800">Bagian B: Skenario & Klasifikasi (Drag & Drop)</h3>
-                  </div>
-
-                  {!activeScenario ? (
-                    <div className="bg-slate-100 rounded-2xl p-10 text-center text-slate-500 border-2 border-dashed border-slate-300">
-                      <AlertTriangle size={48} className="mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium">Pilih Nomor Kelompok di atas untuk memunculkan Skenario Masalah.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-8">
-                      <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
-                        <p className="text-sm font-bold text-amber-600 mb-2 uppercase tracking-wide">Skenario Masalah Anda:</p>
-                        <p className="text-2xl font-bold text-slate-800 italic leading-relaxed">"{activeScenario.masalah}"</p>
-                      </div>
-
-                      <div>
-                        <label className="block font-bold text-slate-700 mb-2 text-lg">1. Apa masalah utama dalam skenario tersebut?</label>
-                        <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-2 focus:ring-amber-500 outline-none text-lg" placeholder="Tuliskan inti masalahnya..." value={masalahUtama} onChange={(e) => setMasalahUtama(e.target.value)} />
-                      </div>
-
-                      <div className="pt-6 border-t border-slate-200">
-                        <div className="flex justify-between items-end mb-4">
-                          <label className="block font-bold text-slate-700 text-lg">2. Drag & Drop Foto Perangkat Ke Kategori yang Tepat! (Pilih 3)</label>
-                          <span className="text-sm bg-slate-200 px-3 py-1 rounded-full font-bold text-slate-600">{Object.keys(draggedDevices).length} / 3 Terpilih</span>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-4 p-5 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 min-h-[140px] items-center justify-center">
-                          {activeScenario.perangkat.filter(device => !draggedDevices[device]).map((device) => (
-                            <div 
-                              key={device}
-                              draggable
-                              onDragStart={(e) => handleDragStart(e, device)}
-                              className="bg-white p-3 pr-5 rounded-xl shadow-md border border-slate-200 flex items-center gap-3 cursor-grab hover:scale-105 transition-transform hover:shadow-lg active:cursor-grabbing"
-                            >
-                              <div className="w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-slate-100 border border-slate-100">
-                                <img src={deviceImages[device] || `https://placehold.co/100x100/e2e8f0/475569?text=${device}`} alt={device} crossOrigin="anonymous" className="w-full h-full object-cover pointer-events-none" />
-                              </div>
-                              <div>
-                                 <span className="font-bold text-slate-700 block text-lg">{device}</span>
-                                 <GripVertical size={16} className="text-slate-400 mt-1 inline-block"/> <span className="text-xs text-slate-400">Tarik foto</span>
-                              </div>
-                            </div>
-                          ))}
-                          {activeScenario.perangkat.filter(device => !draggedDevices[device]).length === 0 && (
-                            <p className="text-slate-400 font-medium italic">Semua perangkat sudah dipindahkan ke kategori.</p>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                          {kategories.map(kat => (
-                            <div 
-                              key={kat}
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => handleDrop(e, kat)}
-                              className="bg-slate-50 rounded-2xl p-4 border-2 border-dashed border-slate-300 min-h-[220px] transition-colors hover:bg-slate-100"
-                            >
-                              <h4 className="font-bold text-slate-600 text-center mb-4 border-b border-slate-200 pb-2">Area {kat}</h4>
-                              <div className="space-y-3">
-                                {Object.entries(draggedDevices)
-                                  .filter(([_, data]) => data.kategori === kat)
-                                  .map(([device, data]) => (
-                                    <div key={device} className="bg-white p-4 rounded-xl shadow-sm border border-emerald-200 flex flex-col gap-3 relative animate-fade-in-up">
-                                      <button onClick={() => handleRemoveDevice(device)} className="absolute -top-2 -right-2 bg-red-100 hover:bg-red-200 text-red-600 w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-sm transition-colors z-10 cursor-pointer">✕</button>
-                                      
-                                      <div className="flex items-center gap-4">
-                                        <img src={deviceImages[device] || `https://placehold.co/100x100/e2e8f0/475569?text=${device}`} alt={device} crossOrigin="anonymous" className="w-20 h-20 object-cover rounded-lg shadow-sm border border-slate-100" />
-                                        <span className="font-bold text-emerald-800 text-xl">{device}</span>
-                                      </div>
-                                      
-                                      <input 
-                                        type="text" 
-                                        className="w-full text-base bg-slate-50 border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 outline-none"
-                                        placeholder="Tulis alasan memilih alat ini..."
-                                        value={data.alasan}
-                                        onChange={(e) => updateAlasan(device, e.target.value)}
-                                      />
-                                    </div>
-                                ))}
-                                {Object.entries(draggedDevices).filter(([_, data]) => data.kategori === kat).length === 0 && (
-                                  <div className="text-center text-slate-400 text-sm mt-8 opacity-70">
-                                    <ImageIcon size={40} className="mx-auto mb-2 opacity-50"/>
-                                    Tarik foto perangkat ke area ini
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </section>
-
-                {/* Bagian C (Analisis) */}
-                <section className={`bg-white rounded-3xl shadow-lg p-6 md:p-8 border-t-4 border-blue-500 transition-opacity duration-500 ${!activeScenario ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="bg-blue-100 p-3 rounded-xl text-blue-600"><Search size={24}/></div>
-                    <h3 className="text-2xl font-bold text-slate-800">Bagian C: Analisis Masalah</h3>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                      <label className="block font-bold text-slate-700 mb-3 text-lg">1. Mengapa masalah itu terjadi? (Tulis 2 kemungkinan penyebab)</label>
-                      <div className="space-y-3">
-                        <div className="flex gap-3"><span className="font-bold text-blue-500 mt-3 text-lg">a.</span><input type="text" className="w-full bg-white border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 text-lg" value={analisis.p1} onChange={(e) => setAnalisis({...analisis, p1: e.target.value})} placeholder="Penyebab pertama..."/></div>
-                        <div className="flex gap-3"><span className="font-bold text-blue-500 mt-3 text-lg">b.</span><input type="text" className="w-full bg-white border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 text-lg" value={analisis.p2} onChange={(e) => setAnalisis({...analisis, p2: e.target.value})} placeholder="Penyebab kedua..."/></div>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                      <label className="block font-bold text-slate-700 mb-3 text-lg">2. Apa solusinya? (Tulis 2 langkah perbaikan)</label>
-                      <div className="space-y-3">
-                        <div className="flex gap-3"><span className="font-bold text-blue-500 mt-3 text-lg">a.</span><input type="text" className="w-full bg-white border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 text-lg" value={analisis.s1} onChange={(e) => setAnalisis({...analisis, s1: e.target.value})} placeholder="Solusi pertama..."/></div>
-                        <div className="flex gap-3"><span className="font-bold text-blue-500 mt-3 text-lg">b.</span><input type="text" className="w-full bg-white border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 text-lg" value={analisis.s2} onChange={(e) => setAnalisis({...analisis, s2: e.target.value})} placeholder="Solusi kedua..."/></div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-2 text-lg">3. Apa yang terjadi jika salah satu perangkat penting di atas tidak ada?</label>
-                      <textarea rows="3" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 outline-none text-lg" placeholder="Tuliskan analisis dampaknya..." value={analisis.dampak} onChange={(e) => setAnalisis({...analisis, dampak: e.target.value})}></textarea>
-                    </div>
-                  </div>
-                </section>
-                
-              </main>
-
-              <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-5 flex justify-center z-50 no-print shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-                <button 
-                  onClick={() => {
-                    if(!kelompok) return;
-                    if(Object.keys(draggedDevices).length < 3) return;
-                    setIsFinished(true);
-                    window.scrollTo(0,0);
-                  }}
-                  disabled={!activeScenario || Object.keys(draggedDevices).length < 3}
-                  className={`flex items-center gap-3 px-10 py-4 rounded-full font-extrabold text-xl shadow-xl transition-all transform hover:scale-105 ${activeScenario && Object.keys(draggedDevices).length >= 3 ? 'bg-gradient-to-r from-teal-500 to-indigo-600 text-white hover:shadow-indigo-500/40 cursor-pointer' : 'bg-slate-300 text-slate-500 cursor-not-allowed'}`}
-                >
-                  <Play size={24} className="fill-current"/> Selesai & Tampilkan Ringkasan Presentasi
-                </button>
-              </div>
+    <!-- s8: DEFINISI HARDWARE -->
+    <section class="section" id="s8">
+      <div class="mb-10"><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Pengertian Hardware</h2><p class="text-slate-500 text-lg">Definisi dan karakteristik fisik komputer.</p></div>
+      <div class="bg-brand-blue rounded-3xl p-8 sm:p-10 text-white shadow-lg mb-10"><p class="text-2xl leading-relaxed font-light"><strong>Perangkat keras (hardware)</strong> adalah komponen elektronik pada komputer yang berwujud fisik, dapat dilihat kasat mata, dan dapat disentuh.</p></div>
+      <div class="grid lg:grid-cols-5 gap-8">
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-3xl p-8 shadow-soft border border-slate-100 h-full">
+            <h3 class="font-heading text-xl font-bold text-slate-800 mb-6 flex items-center gap-3"><span class="w-10 h-10 bg-indigo-50 text-brand-blue rounded-xl flex items-center justify-center">📋</span> Ciri-ciri Utama</h3>
+            <ul class="space-y-6">
+              <li class="flex items-start gap-4"><div class="w-2 h-2 rounded-full bg-brand-blue mt-2.5 shrink-0"></div><div><h4 class="font-bold text-slate-800">Berwujud fisik</h4><p class="text-slate-500 text-sm mt-1">Dapat dilihat dan disentuh.</p></div></li>
+              <li class="flex items-start gap-4"><div class="w-2 h-2 rounded-full bg-brand-blue mt-2.5 shrink-0"></div><div><h4 class="font-bold text-slate-800">Bentuk nyata</h4><p class="text-slate-500 text-sm mt-1">Berupa komponen elektronik/mekanik.</p></div></li>
+              <li class="flex items-start gap-4"><div class="w-2 h-2 rounded-full bg-brand-blue mt-2.5 shrink-0"></div><div><h4 class="font-bold text-slate-800">Butuh daya listrik</h4><p class="text-slate-500 text-sm mt-1">Mayoritas bergantung pada listrik.</p></div></li>
+              <li class="flex items-start gap-4"><div class="w-2 h-2 rounded-full bg-brand-blue mt-2.5 shrink-0"></div><div><h4 class="font-bold text-slate-800">Menjalankan instruksi software</h4><p class="text-slate-500 text-sm mt-1">Bekerja berdasarkan perintah perangkat lunak.</p></div></li>
+            </ul>
+          </div>
+        </div>
+        <div class="lg:col-span-3">
+          <div class="bg-slate-900 rounded-3xl p-8 shadow-lg text-white h-full relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-5 text-9xl">🧍</div>
+            <h3 class="font-heading text-xl font-bold text-white mb-8 relative z-10">Analogi: Tubuh Manusia</h3>
+            <div class="grid grid-cols-2 gap-4 relative z-10">
+              <div class="bg-white/10 p-5 rounded-2xl border border-white/5 hover:bg-white/20 transition-colors"><div class="text-3xl mb-3">👁️</div><h4 class="font-bold text-indigo-200 mb-1">Mata/Telinga</h4><p class="text-sm text-slate-400">Penerima info (Input)</p></div>
+              <div class="bg-white/10 p-5 rounded-2xl border border-white/5 hover:bg-white/20 transition-colors"><div class="text-3xl mb-3">🧠</div><h4 class="font-bold text-indigo-200 mb-1">Otak</h4><p class="text-sm text-slate-400">Pengolah info (Proses)</p></div>
+              <div class="bg-white/10 p-5 rounded-2xl border border-white/5 hover:bg-white/20 transition-colors"><div class="text-3xl mb-3">🗣️</div><h4 class="font-bold text-indigo-200 mb-1">Mulut/Tangan</h4><p class="text-sm text-slate-400">Penyampai hasil (Output)</p></div>
+              <div class="bg-white/10 p-5 rounded-2xl border border-white/5 hover:bg-white/20 transition-colors"><div class="text-3xl mb-3">💭</div><h4 class="font-bold text-indigo-200 mb-1">Ingatan</h4><p class="text-sm text-slate-400">Penyimpanan (Storage)</p></div>
             </div>
-          );
-        }
+          </div>
+        </div>
+      </div>
+    </section>
 
-        const root = createRoot(document.getElementById('root'));
-        root.render(<LKPDSistemKomputer />);
-    </script>
+    <!-- s9: KLASIFIKASI -->
+    <section class="section" id="s9">
+      <div class="mb-10"><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Cara Mengklasifikasi</h2><p class="text-slate-500 text-lg">Langkah praktis mengelompokkan perangkat saat praktik.</p></div>
+      <div class="bg-white rounded-3xl p-8 sm:p-12 shadow-soft border border-slate-100 relative">
+        <div class="hidden md:block absolute left-1/2 top-12 bottom-12 w-1 bg-gradient-to-b from-indigo-200 via-amber-200 to-emerald-200 -translate-x-1/2"></div>
+        <div class="space-y-12 relative z-10">
+          <div class="flex flex-col md:flex-row items-center gap-6 md:gap-12 w-full">
+            <div class="md:w-1/2 flex justify-end"><div class="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl w-full text-center md:text-right shadow-sm"><h4 class="font-heading font-bold text-lg text-indigo-900 mb-2">Amati Fisik</h4><p class="text-indigo-700/80">Berupa tombol, layar, cip, atau slot?</p></div></div>
+            <div class="w-14 h-14 rounded-full bg-brand-blue text-white font-bold text-xl flex items-center justify-center shrink-0 shadow-lg border-4 border-white z-10 md:absolute md:left-1/2 md:-translate-x-1/2">1</div>
+            <div class="md:w-1/2 hidden md:block"></div>
+          </div>
+          <div class="flex flex-col md:flex-row items-center gap-6 md:gap-12 w-full">
+            <div class="md:w-1/2 hidden md:block"></div>
+            <div class="w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl flex items-center justify-center shrink-0 shadow-lg border-4 border-white z-10 md:absolute md:left-1/2 md:-translate-x-1/2">2</div>
+            <div class="md:w-1/2 flex justify-start"><div class="bg-amber-50 border border-amber-100 p-6 rounded-2xl w-full text-center md:text-left shadow-sm"><h4 class="font-heading font-bold text-lg text-amber-900 mb-2">Tentukan Fungsi</h4><p class="text-amber-700/80">Memasukkan, mengolah, menampilkan, atau menyimpan?</p></div></div>
+          </div>
+          <div class="flex flex-col md:flex-row items-center gap-6 md:gap-12 w-full">
+            <div class="md:w-1/2 flex justify-end"><div class="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl w-full text-center md:text-right shadow-sm"><h4 class="font-heading font-bold text-lg text-emerald-900 mb-3">Kelompokkan</h4><div class="flex flex-wrap justify-center md:justify-end gap-2"><span class="px-3 py-1 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-full">INPUT</span><span class="px-3 py-1 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-full">PROSES</span><span class="px-3 py-1 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-full">OUTPUT</span><span class="px-3 py-1 bg-white border border-emerald-200 text-emerald-700 text-xs font-bold rounded-full">SIMPAN</span></div></div></div>
+            <div class="w-14 h-14 rounded-full bg-emerald-500 text-white font-bold text-xl flex items-center justify-center shrink-0 shadow-lg border-4 border-white z-10 md:absolute md:left-1/2 md:-translate-x-1/2">3</div>
+            <div class="md:w-1/2 hidden md:block"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- s10: GALERI PERANGKAT (GAMBAR ASLI) -->
+    <section class="section" id="s10">
+      <div class="mb-10"><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Galeri Perangkat</h2><p class="text-slate-500 text-lg">Klik gambar untuk melihat detail lengkap perangkat.</p></div>
+
+      <!-- INPUT -->
+      <div class="mb-14">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">1</div>
+          <div><h3 class="font-heading text-2xl font-bold text-slate-800">Perangkat Input (Masukan)</h3><p class="text-sm text-slate-500">Analogi: seperti pintu masuk ke dalam rumah. Tanpa pintu, tidak ada yang bisa masuk.</p></div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="grid-input"></div>
+      </div>
+
+      <!-- PROSES -->
+      <div class="mb-14">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">2</div>
+          <div><h3 class="font-heading text-2xl font-bold text-slate-800">Perangkat Proses (Pengolahan)</h3><p class="text-sm text-slate-500">Analogi: seperti otak yang berpikir dan mengolah informasi.</p></div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="grid-proses"></div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="mb-14">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">3</div>
+          <div><h3 class="font-heading text-2xl font-bold text-slate-800">Perangkat Output (Keluaran)</h3><p class="text-sm text-slate-500">Analogi: seperti mulut yang menyampaikan hasil olahan otak.</p></div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="grid-output"></div>
+      </div>
+
+      <!-- PENYIMPANAN -->
+      <div class="mb-6">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">4</div>
+          <div><h3 class="font-heading text-2xl font-bold text-slate-800">Perangkat Penyimpanan (Storage)</h3><p class="text-sm text-slate-500">Analogi: seperti lemari arsip, tempat menyimpan dokumen agar tidak hilang.</p></div>
+        </div>
+        <h4 class="font-heading text-lg font-bold text-slate-700 mb-4 pl-2 border-l-4 border-purple-400">a. Penyimpanan Internal (di dalam komputer)</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8" id="grid-storage-internal"></div>
+        <h4 class="font-heading text-lg font-bold text-slate-700 mb-4 pl-2 border-l-4 border-purple-400">b. Penyimpanan Eksternal (di luar komputer)</h4>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" id="grid-storage-external"></div>
+      </div>
+    </section>
+
+    <!-- s11: MATRIKS -->
+    <section class="section" id="s11">
+      <div class="mb-10"><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Matriks Ringkasan</h2><p class="text-slate-500 text-lg">Tabel perbandingan kategori perangkat keras.</p></div>
+      <div class="bg-white rounded-3xl shadow-soft border border-slate-100 overflow-hidden mb-8">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-base">
+            <thead class="bg-slate-50 text-slate-600 font-heading border-b border-slate-100">
+              <tr><th class="p-6 font-bold uppercase tracking-wider text-sm">Kategori</th><th class="p-6 font-bold uppercase tracking-wider text-sm">Fungsi Utama</th><th class="p-6 font-bold uppercase tracking-wider text-sm">Contoh</th><th class="p-6 font-bold uppercase tracking-wider text-sm">Jika Tidak Ada?</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              <tr class="hover:bg-slate-50/50"><td class="p-6"><span class="px-3 py-1 bg-emerald-100 text-emerald-700 font-bold rounded-lg text-sm">INPUT</span></td><td class="p-6 text-slate-600">Memasukkan data/perintah</td><td class="p-6 text-slate-600 font-medium">Keyboard, Mouse</td><td class="p-6 text-red-500 font-medium">Sistem tidak menerima data</td></tr>
+              <tr class="hover:bg-slate-50/50"><td class="p-6"><span class="px-3 py-1 bg-amber-100 text-amber-700 font-bold rounded-lg text-sm">PROSES</span></td><td class="p-6 text-slate-600">Mengolah data mentah</td><td class="p-6 text-slate-600 font-medium">CPU, RAM, GPU</td><td class="p-6 text-red-500 font-medium">Komputer tidak bisa bekerja</td></tr>
+              <tr class="hover:bg-slate-50/50"><td class="p-6"><span class="px-3 py-1 bg-blue-100 text-blue-700 font-bold rounded-lg text-sm">OUTPUT</span></td><td class="p-6 text-slate-600">Menyajikan hasil olahan</td><td class="p-6 text-slate-600 font-medium">Monitor, Printer</td><td class="p-6 text-red-500 font-medium">Hasil kerja tidak terlihat</td></tr>
+              <tr class="hover:bg-slate-50/50"><td class="p-6"><span class="px-3 py-1 bg-purple-100 text-purple-700 font-bold rounded-lg text-sm">SIMPAN</span></td><td class="p-6 text-slate-600">Penyimpanan permanen/sementara</td><td class="p-6 text-slate-600 font-medium">SSD, HDD, Flashdisk</td><td class="p-6 text-red-500 font-medium">Data hilang saat dimatikan</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl p-8 sm:p-10 text-white shadow-lg relative overflow-hidden">
+        <div class="absolute right-0 bottom-0 opacity-10 text-9xl transform translate-x-1/4 translate-y-1/4">🗄️</div>
+        <h3 class="font-heading text-xl font-bold mb-6 relative z-10">Analogi Penyimpanan</h3>
+        <ul class="space-y-4 text-lg relative z-10 text-purple-50">
+          <li class="flex items-start gap-3"><span class="mt-1 w-2 h-2 rounded-full bg-white shrink-0"></span><p><strong class="text-white">HDD/SSD</strong> = lemari besar di rumah (menyimpan banyak barang).</p></li>
+          <li class="flex items-start gap-3"><span class="mt-1 w-2 h-2 rounded-full bg-white shrink-0"></span><p><strong class="text-white">Flashdisk</strong> = tas kecil (membawa barang ke tempat lain).</p></li>
+          <li class="flex items-start gap-3"><span class="mt-1 w-2 h-2 rounded-full bg-white shrink-0"></span><p><strong class="text-white">RAM</strong> = meja belajar (hanya menampung buku yang sedang dipakai).</p></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- s12: RESOLUSI KASUS -->
+    <section class="section" id="s12">
+      <div class="mb-10"><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Resolusi Kasus</h2><p class="text-slate-500 text-lg">Kembali ke masalah Bu Ema di awal pembelajaran.</p></div>
+      <div class="bg-indigo-900 rounded-3xl p-8 sm:p-12 mb-10 shadow-lg relative overflow-hidden text-white">
+        <div class="absolute right-0 top-0 w-64 h-64 bg-indigo-500 rounded-full blur-[80px] opacity-20"></div>
+        <h3 class="font-heading text-2xl font-bold text-indigo-100 mb-6 flex items-center gap-3"><span class="text-3xl">💡</span> Jawaban Studi Kasus</h3>
+        <div class="space-y-6 text-indigo-100/90 text-lg leading-relaxed relative z-10">
+          <p>Setelah belajar hari ini, penyebab printer Bu Ema tidak merespon menjadi sangat jelas:</p>
+          <div class="bg-white/10 p-6 rounded-2xl border border-white/10">
+            <ul class="space-y-3 list-disc list-inside">
+              <li>Komputer (sebagai <strong class="text-amber-300">Pemroses/Pengirim</strong> instruksi)</li>
+              <li>Printer (sebagai alat <strong class="text-emerald-300">Output</strong>)</li>
+              <li>Kabel (sebagai <strong class="text-sky-300">Penghubung</strong>)</li>
+            </ul>
+            <p class="mt-4">Instruksi dari otak (CPU) tidak bisa sampai ke mulut (Printer) karena sarafnya (kabel) terputus.</p>
+          </div>
+          <p class="font-medium bg-indigo-800/50 p-4 rounded-xl text-center">"Sebuah perangkat keras sehebat apapun tidak bisa bekerja sendiri. Mereka harus terhubung membentuk sebuah SISTEM."</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- s13: REFLEKSI -->
+    <section class="section" id="s13">
+      <div class="mb-10"><h2 class="font-heading text-3xl sm:text-4xl font-bold text-brand-dark mb-4">Refleksi Belajar</h2><p class="text-slate-500 text-lg">Mari evaluasi pemahaman dan emosi kita hari ini.</p></div>
+      <div class="bg-white rounded-3xl p-8 sm:p-10 shadow-soft border border-slate-100 mb-8 text-center">
+        <h3 class="font-heading text-xl font-bold text-slate-800 mb-8">Bagaimana perasaanmu setelah belajar hari ini?</h3>
+        <div class="flex flex-wrap justify-center gap-4 sm:gap-8">
+          <button class="text-5xl sm:text-6xl hover:scale-110 transition-transform filter grayscale opacity-50 hover:grayscale-0 hover:opacity-100 emoji-btn" onclick="selectEmoji(this)">🤩</button>
+          <button class="text-5xl sm:text-6xl hover:scale-110 transition-transform filter grayscale opacity-50 hover:grayscale-0 hover:opacity-100 emoji-btn" onclick="selectEmoji(this)">😊</button>
+          <button class="text-5xl sm:text-6xl hover:scale-110 transition-transform filter grayscale opacity-50 hover:grayscale-0 hover:opacity-100 emoji-btn" onclick="selectEmoji(this)">😐</button>
+          <button class="text-5xl sm:text-6xl hover:scale-110 transition-transform filter grayscale opacity-50 hover:grayscale-0 hover:opacity-100 emoji-btn" onclick="selectEmoji(this)">🤔</button>
+          <button class="text-5xl sm:text-6xl hover:scale-110 transition-transform filter grayscale opacity-50 hover:grayscale-0 hover:opacity-100 emoji-btn" onclick="selectEmoji(this)">😴</button>
+        </div>
+      </div>
+      <div class="bg-white rounded-3xl p-8 sm:p-10 shadow-soft border border-slate-100 space-y-8">
+        <div><label class="block font-heading font-bold text-lg text-slate-800 mb-3">1. Apa hal baru paling menarik yang kamu temukan hari ini?</label><textarea class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-indigo-100 transition-all resize-y min-h-[120px]" placeholder="Ketikkan jawabanmu di sini..."></textarea></div>
+        <div><label class="block font-heading font-bold text-lg text-slate-800 mb-3">2. Bagian mana yang menurutmu masih sulit dipahami?</label><textarea class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-5 text-base focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-indigo-100 transition-all resize-y min-h-[120px]" placeholder="Ketikkan jawabanmu di sini..."></textarea></div>
+      </div>
+    </section>
+
+    <!-- s14: PENUTUP -->
+    <section class="section" id="s14">
+      <div class="bg-gradient-to-br from-indigo-900 via-brand-blue to-indigo-800 rounded-3xl p-10 sm:p-16 text-center shadow-2xl relative overflow-hidden mb-10 text-white">
+        <div class="absolute -top-32 -right-32 w-80 h-80 bg-brand-orange opacity-30 rounded-full blur-[80px]"></div>
+        <div class="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center text-5xl mx-auto mb-8 border border-white/20 backdrop-blur-sm">🎉</div>
+        <h2 class="font-heading text-4xl sm:text-5xl font-extrabold mb-4">Luar Biasa!</h2>
+        <p class="text-xl text-indigo-100 mb-10 max-w-2xl mx-auto font-light">Kalian telah menyelesaikan materi Sistem Komputer (Hardware) hari ini dengan sangat baik.</p>
+        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-white/20 text-left max-w-2xl mx-auto shadow-lg">
+          <h3 class="font-heading font-bold text-lg text-brand-orange mb-4 flex items-center gap-2 uppercase tracking-widest"><span>⚠️</span> Prosedur K3 Meninggalkan Lab</h3>
+          <ul class="space-y-3 text-lg list-disc list-inside text-indigo-50">
+            <li>Pastikan komputer di-<strong>Shutdown</strong> dengan benar.</li>
+            <li>Rapikan kembali <strong>kursi, keyboard, dan mouse</strong>.</li>
+            <li>Bersihkan area mejamu dari sampah.</li>
+            <li>Pastikan barang bawaan pribadi tidak tertinggal.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="mt-12 pt-6 border-t border-slate-200 flex flex-col-reverse sm:flex-row justify-between items-center gap-4">
+      <button id="btn-prev" onclick="navStep(-1)" class="w-full sm:w-auto px-6 py-3.5 rounded-xl text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-800 font-semibold transition-all shadow-sm flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+        Sebelumnya
+      </button>
+      <button id="btn-next" onclick="navStep(1)" class="w-full sm:w-auto px-8 py-3.5 rounded-xl text-white bg-brand-blue hover:bg-indigo-700 font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group">
+        Selanjutnya
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- LIGHTBOX -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightboxOutside(event)">
+  <div class="lightbox-content" onclick="event.stopPropagation()">
+    <button class="lightbox-close" onclick="closeLightbox()" title="Tutup (ESC)">✕</button>
+    <div class="lightbox-visual" id="lb-visual"></div>
+    <div class="lightbox-info">
+      <span class="kategori-badge" id="lb-kategori"></span>
+      <h3 id="lb-title"></h3>
+      <p id="lb-desc"></p>
+      <div class="lightbox-tips" id="lb-tips"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================
+   NAMA FILE GAMBAR (SESUAI FOLDER ANDA)
+   ========================================================== */
+const deviceImages = {
+  // INPUT
+  keyboard:      'Keyboard.png',
+  mouse:         'Mouse.png',
+  scanner:       'Scanner.png',
+  mikrofon:      'Mikrofon.png',
+  webcam:        'Webcam.png',
+  joystick:      'Joystick.png',
+  touchscreen:   'Touchscreen.png',
+  barcode:       'Scanner2.png',
+  case:          'case.png',
+
+  // PROSES
+  cpu:           'CPU.png',
+  gpu:           'GPU.png',
+  ram:           'RAM.png',
+  motherboard:   'Motherboard.png',
+
+  // OUTPUT
+  monitor:       'Monitor.png',
+  printer:       'Printer.png',
+  speaker:       'Speaker.png',
+  proyektor:     'Proyektor.png',
+
+  // STORAGE
+  hdd:           'HDD (Hard Disk Drive).png',
+  ssd:           'SSD (Solid State Drive).png',
+  flashdisk:     'Flashdisk.png',
+  externalhdd:   'External Hard Disk.png',
+  memorycard:    'MemoryCard.png'
+};
+
+/* ============ DATA LENGKAP PERANGKAT ============ */
+const deviceData = {
+  // INPUT
+  keyboard: {
+    title: 'Keyboard', kategori: 'Input', katClass: 'lb-kat-input',
+    desc: 'Keyboard adalah perangkat input yang digunakan untuk mengetik huruf, angka, simbol, dan perintah ke dalam komputer. Keyboard modern memiliki layout QWERTY dengan tombol fungsi, navigasi, dan numerik.',
+    tips: '💡 <strong>Fakta:</strong> Keyboard pertama kali dipatenkan oleh Christopher Latham Sholes pada 1868. Layout QWERTY dirancang untuk mengurangi kemacetan pada mesin tik mekanik.'
+  },
+  mouse: {
+    title: 'Mouse', kategori: 'Input', katClass: 'lb-kat-input',
+    desc: 'Mouse adalah perangkat penunjuk (pointing device) untuk menggerakkan kursor, mengklik, men-drag, dan berinteraksi dengan antarmuka grafis. Mouse modern dilengkapi scroll wheel dan sensor optik/laser.',
+    tips: '💡 <strong>Fakta:</strong> Mouse pertama diciptakan Douglas Engelbart tahun 1964 dan terbuat dari kayu!'
+  },
+  scanner: {
+    title: 'Scanner', kategori: 'Input', katClass: 'lb-kat-input',
+    desc: 'Scanner adalah perangkat input yang memindai dokumen fisik menjadi file digital berbentuk gambar atau PDF. Hasil scan dapat diedit dan disimpan di komputer.',
+    tips: '💡 <strong>Jenis:</strong> Flatbed, sheet-fed, dan handheld scanner.'
+  },
+  mikrofon: {
+    title: 'Mikrofon', kategori: 'Input', katClass: 'lb-kat-input',
+    desc: 'Mikrofon mengubah gelombang suara menjadi sinyal listrik/digital yang dapat diproses komputer. Digunakan untuk rekaman, video call, dan perintah suara.',
+    tips: '💡 <strong>Jenis:</strong> Dynamic, Condenser, dan Ribbon.'
+  },
+  webcam: {
+    title: 'Webcam', kategori: 'Input', katClass: 'lb-kat-input',
+    desc: 'Webcam (web camera) adalah kamera digital yang terhubung ke komputer untuk mengambil gambar atau video secara real-time. Digunakan untuk video call, streaming, dan konferensi online.',
+    tips: '💡 <strong>Fakta:</strong> Webcam pertama "CoffeeCam" dipasang di Universitas Cambridge 1991 untuk memantau persediaan kopi!'
+  },
+  joystick: {
+    title: 'Joystick', kategori: 'Input', katClass: 'lb-kat-input',
+    desc: 'Joystick adalah perangkat input untuk mengontrol permainan atau aplikasi tertentu. Memiliki tuas yang bisa digerakkan ke berbagai arah serta tombol-tombol aksi.',
+    tips: '💡 <strong>Penggunaan:</strong> Selain gaming, joystick juga dipakai untuk drone, alat berat, dan simulator penerbangan.'
+  },
+  touchscreen: {
+    title: 'Touchscreen', kategori: 'Input', katClass: 'lb-kat-input',
+    desc: 'Touchscreen adalah layar yang dapat menerima sentuhan langsung dari jari atau stylus pengguna. Berfungsi ganda sebagai perangkat input sekaligus output.',
+    tips: '💡 <strong>Jenis:</strong> Resistive (tekanan) dan Capacitive (sentuhan listrik dari jari).'
+  },
+  barcode: {
+    title: 'Barcode Scanner', kategori: 'Input', katClass: 'lb-kat-input',
+    desc: 'Barcode scanner membaca kode batang (barcode) pada produk. Umum digunakan di supermarket, perpustakaan, dan manajemen inventaris.',
+    tips: '💡 <strong>Fakta:</strong> Barcode pertama dipatenkan 1952, tapi baru dipakai komersial 1974 di supermarket Ohio, AS.'
+  },
+
+  // PROSES
+  cpu: {
+    title: 'CPU (Central Processing Unit)', kategori: 'Proses', katClass: 'lb-kat-proses',
+    desc: 'CPU adalah unit pemroses utama yang menjadi "otak" komputer. Menerima instruksi dari input, mengolahnya, dan mengirim hasil ke output. Terdiri dari ALU dan CU.',
+    tips: '💡 <strong>Fakta:</strong> CPU modern seperti Intel Core i9 memiliki miliaran transistor dalam satu chip berukuran beberapa sentimeter!'
+  },
+  gpu: {
+    title: 'GPU (Graphics Processing Unit)', kategori: 'Proses', katClass: 'lb-kat-proses',
+    desc: 'GPU adalah prosesor khusus yang mengolah data grafis dan gambar. Sangat penting untuk gaming, editing video, rendering 3D, dan machine learning.',
+    tips: '💡 <strong>Perbedaan:</strong> CPU sedikit core tapi cepat untuk tugas kompleks. GPU banyak core untuk tugas paralel seperti rendering.'
+  },
+  ram: {
+    title: 'RAM (Random Access Memory)', kategori: 'Proses', katClass: 'lb-kat-proses',
+    desc: 'RAM adalah memori penyimpanan sementara yang menyimpan data dan instruksi saat komputer bekerja. Semakin besar RAM, semakin banyak aplikasi bisa dibuka bersamaan.',
+    tips: '💡 <strong>Analogi:</strong> RAM seperti meja belajar — hanya menampung buku yang sedang dipakai. Saat komputer dimatikan, isi RAM ikut hilang.'
+  },
+  motherboard: {
+    title: 'Motherboard', kategori: 'Proses', katClass: 'lb-kat-proses',
+    desc: 'Motherboard adalah papan sirkuit utama yang menghubungkan semua komponen — CPU, RAM, GPU, storage, dan periferal. Menyalurkan daya dan data antar komponen.',
+    tips: '💡 <strong>Fakta:</strong> Motherboard juga sering disebut "mobo" atau "mainboard" oleh teknisi komputer.'
+  },
+  case: {
+    title: 'Case', kategori: 'Proses', katClass: 'lb-kat-proses',
+    desc: 'Case adalah wadah pelindung utama untuk menempatkan, mengorganisasi, dan mengamankan berbagai komponen internal komputer seperti motherboard, PSU, dan drive penyimpanan.',
+    tips: '💡 <strong>Jenis:</strong> Full tower (besar), Mid tower (sedang), Mini-ITX (kecil).'
+  },
+
+  // OUTPUT
+  monitor: {
+    title: 'Monitor', kategori: 'Output', katClass: 'lb-kat-output',
+    desc: 'Monitor adalah perangkat output utama yang menampilkan gambar, teks, dan video secara visual. Menjadi jendela interaksi antara pengguna dengan komputer.',
+    tips: '💡 <strong>Jenis panel:</strong> TN (cepat), IPS (warna akurat), VA (kontras tinggi), OLED (hitam sempurna).'
+  },
+  printer: {
+    title: 'Printer', kategori: 'Output', katClass: 'lb-kat-output',
+    desc: 'Printer adalah perangkat output yang mencetak dokumen atau gambar ke media fisik seperti kertas. Ada beberapa jenis: inkjet (tinta cair), laser (toner), dan dot matrix.',
+    tips: '💡 <strong>Tips:</strong> Printer inkjet lebih murah tapi boros tinta. Printer laser lebih mahal tapi hemat biaya per halaman.'
+  },
+  speaker: {
+    title: 'Speaker', kategori: 'Output', katClass: 'lb-kat-output',
+    desc: 'Speaker adalah perangkat output yang mengeluarkan suara dari komputer. Mengubah sinyal listrik menjadi gelombang suara yang bisa didengar.',
+    tips: '💡 <strong>Fakta:</strong> Speaker mengubah sinyal listrik menjadi getaran mekanis melalui membran yang bergerak cepat.'
+  },
+  proyektor: {
+    title: 'Proyektor', kategori: 'Output', katClass: 'lb-kat-output',
+    desc: 'Proyektor menampilkan gambar ke layar besar atau dinding. Umum digunakan untuk presentasi, bioskop, dan pembelajaran di kelas.',
+    tips: '💡 <strong>Jenis:</strong> LCD, DLP, dan Laser.'
+  },
+
+  // STORAGE
+  hdd: {
+    title: 'HDD (Hard Disk Drive)', kategori: 'Penyimpanan', katClass: 'lb-kat-storage',
+    desc: 'HDD adalah media penyimpanan magnetik dengan piringan berputar. Menyimpan data permanen dengan kapasitas besar dan harga murah, namun lebih lambat dibanding SSD.',
+    tips: '💡 <strong>Analogi:</strong> HDD seperti lemari besar di rumah — muat banyak barang, tapi untuk mengambil barang perlu waktu.'
+  },
+  ssd: {
+    title: 'SSD (Solid State Drive)', kategori: 'Penyimpanan', katClass: 'lb-kat-storage',
+    desc: 'SSD adalah media penyimpanan berbasis chip memori flash tanpa bagian bergerak. Jauh lebih cepat, senyap, dan tahan guncangan dibanding HDD, tapi lebih mahal.',
+    tips: '💡 <strong>Fakta:</strong> SSD bisa membaca data hingga 7.000 MB/detik — 10x lebih cepat dari HDD tercepat!'
+  },
+  flashdisk: {
+    title: 'Flashdisk', kategori: 'Penyimpanan', katClass: 'lb-kat-storage',
+    desc: 'Flashdisk adalah media penyimpanan portabel berbasis flash memory dengan konektor USB. Kecil, ringan, mudah dibawa, dan tidak memerlukan daya eksternal.',
+    tips: '💡 <strong>Analogi:</strong> Flashdisk seperti tas kecil — membawa barang ke tempat lain dengan mudah.'
+  },
+  externalhdd: {
+    title: 'External Hard Disk', kategori: 'Penyimpanan', katClass: 'lb-kat-storage',
+    desc: 'External HDD adalah hard disk yang dikemas dalam casing eksternal dengan koneksi USB/eSATA. Menyimpan data dalam jumlah besar dan portabel untuk backup.',
+    tips: '💡 <strong>Tips:</strong> Cocok untuk backup file besar seperti video editing dan koleksi foto.'
+  },
+  memorycard: {
+    title: 'Memory Card', kategori: 'Penyimpanan', katClass: 'lb-kat-storage',
+    desc: 'Memory Card adalah media penyimpanan kecil berbentuk kartu untuk perangkat mobile seperti kamera, HP, drone, dan konsol game. Jenis umum: SD, microSD, CF.',
+    tips: '💡 <strong>Fakta:</strong> MicroSD berukuran sebesar kuku jari, tapi bisa menyimpan hingga 1 TB data!'
+  }
+};
+
+/* ============ DAFTAR PERANGKAT PER KATEGORI ============ */
+const deviceGroups = {
+  'grid-input': [
+    { id: 'keyboard', name: 'Keyboard', desc: 'Mengetik huruf, angka, perintah', badge: 'lb-kat-input', badgeText: 'Input' },
+    { id: 'mouse', name: 'Mouse', desc: 'Menggerakkan kursor dan mengklik', badge: 'lb-kat-input', badgeText: 'Input' },
+    { id: 'scanner', name: 'Scanner', desc: 'Memindai dokumen jadi file digital', badge: 'lb-kat-input', badgeText: 'Input' },
+    { id: 'mikrofon', name: 'Mikrofon', desc: 'Merekam suara ke komputer', badge: 'lb-kat-input', badgeText: 'Input' },
+    { id: 'webcam', name: 'Webcam', desc: 'Mengambil gambar atau video', badge: 'lb-kat-input', badgeText: 'Input' },
+    { id: 'joystick', name: 'Joystick', desc: 'Mengontrol permainan/aplikasi', badge: 'lb-kat-input', badgeText: 'Input' },
+    { id: 'touchscreen', name: 'Touchscreen', desc: 'Sentuhan langsung dari jari', badge: 'lb-kat-input', badgeText: 'Input' },
+    { id: 'barcode', name: 'Barcode Scanner', desc: 'Membaca kode batang produk', badge: 'lb-kat-input', badgeText: 'Input' }
+  ],
+  'grid-proses': [
+    { id: 'cpu', name: 'CPU', desc: 'Otak komputer; mengolah semua data', badge: 'lb-kat-proses', badgeText: 'Proses' },
+    { id: 'gpu', name: 'GPU (VGA)', desc: 'Mengolah data grafis dan gambar', badge: 'lb-kat-proses', badgeText: 'Proses' },
+    { id: 'ram', name: 'RAM', desc: 'Menyimpan data sementara', badge: 'lb-kat-proses', badgeText: 'Proses' },
+    { id: 'motherboard', name: 'Motherboard', desc: 'Papan utama penghubung komponen', badge: 'lb-kat-proses', badgeText: 'Proses' },
+    { id: 'case', name: 'Case', desc: 'Wadah pelindung komponen internal', badge: 'lb-kat-proses', badgeText: 'Proses' }
+  ],
+  'grid-output': [
+    { id: 'monitor', name: 'Monitor', desc: 'Menampilkan gambar dan teks', badge: 'lb-kat-output', badgeText: 'Output' },
+    { id: 'printer', name: 'Printer', desc: 'Mencetak dokumen ke kertas', badge: 'lb-kat-output', badgeText: 'Output' },
+    { id: 'speaker', name: 'Speaker', desc: 'Mengeluarkan suara', badge: 'lb-kat-output', badgeText: 'Output' },
+    { id: 'proyektor', name: 'Proyektor', desc: 'Menampilkan gambar ke layar besar', badge: 'lb-kat-output', badgeText: 'Output' }
+  ],
+  'grid-storage-internal': [
+    { id: 'hdd', name: 'HDD', desc: 'Kapasitas besar, murah, lebih lambat', badge: 'lb-kat-storage', badgeText: 'Storage' },
+    { id: 'ssd', name: 'SSD', desc: 'Lebih cepat, ringan, lebih mahal', badge: 'lb-kat-storage', badgeText: 'Storage' },
+    { id: 'ram', name: 'RAM', desc: 'Data hilang saat komputer dimatikan', badge: 'lb-kat-storage', badgeText: 'Storage' }
+  ],
+  'grid-storage-external': [
+    { id: 'flashdisk', name: 'Flashdisk', desc: 'Kecil, mudah dibawa', badge: 'lb-kat-storage', badgeText: 'Storage' },
+    { id: 'externalhdd', name: 'External HDD', desc: 'Kapasitas besar, portabel', badge: 'lb-kat-storage', badgeText: 'Storage' },
+    { id: 'memorycard', name: 'Memory Card', desc: 'Untuk kamera/HP/perangkat mobile', badge: 'lb-kat-storage', badgeText: 'Storage' }
+  ]
+};
+
+/* ============ RENDER KARTU PERANGKAT ============ */
+function renderDeviceCard(item) {
+  const imgUrl = deviceImages[item.id] || '';
+  return `
+    <div class="device-card" onclick="openLightbox('${item.id}')">
+      <div class="device-visual">
+        <img src="${imgUrl}" alt="${item.name}" loading="lazy">
+        <span class="zoom-hint">🔍</span>
+      </div>
+      <div class="device-body">
+        <h5>${item.name}</h5>
+        <p>${item.desc}</p>
+        <span class="mini-badge ${item.badge}">${item.badgeText}</span>
+      </div>
+    </div>
+  `;
+}
+
+Object.keys(deviceGroups).forEach(gridId => {
+  const grid = document.getElementById(gridId);
+  if (grid) {
+    grid.innerHTML = deviceGroups[gridId].map(renderDeviceCard).join('');
+  }
+});
+
+/* ============ LIGHTBOX ============ */
+function openLightbox(id) {
+  const d = deviceData[id];
+  if (!d) return;
+
+  document.getElementById('lb-title').textContent = d.title;
+  document.getElementById('lb-desc').textContent = d.desc;
+  document.getElementById('lb-tips').innerHTML = d.tips || '';
+
+  const katEl = document.getElementById('lb-kategori');
+  katEl.textContent = d.kategori;
+  katEl.className = 'kategori-badge ' + d.katClass;
+
+  const visualEl = document.getElementById('lb-visual');
+  const imgUrl = deviceImages[id] || '';
+  visualEl.innerHTML = `<img src="${imgUrl}" alt="${d.title}">`;
+
+  document.getElementById('lightbox').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function closeLightboxOutside(e) { if (e.target.id === 'lightbox') closeLightbox(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+/* ============ NAVIGASI ============ */
+const menuData = [
+  { id: 's1', title: 'Beranda / Cover' },
+  { id: 's2', title: 'Apersepsi' },
+  { id: 's3', title: 'Motivasi' },
+  { id: 's4', title: 'Tujuan Belajar' },
+  { id: 's5', title: 'Studi Kasus' },
+  { id: 's6', title: 'Pengertian Sistem' },
+  { id: 's7', title: 'Alur I - P - O - P' },
+  { id: 's8', title: 'Definisi Hardware' },
+  { id: 's9', title: 'Klasifikasi Fungsi' },
+  { id: 's10', title: 'Galeri Perangkat' },
+  { id: 's11', title: 'Matriks Ringkasan' },
+  { id: 's12', title: 'Resolusi Kasus' },
+  { id: 's13', title: 'Refleksi' },
+  { id: 's14', title: 'Penutup' }
+];
+
+let currentIndex = 0;
+const menuContainer = document.getElementById('menu-container');
+const sections = document.querySelectorAll('.section');
+const progressBar = document.getElementById('progress-bar');
+const sidebar = document.getElementById('sidebar');
+const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+const btnPrev = document.getElementById('btn-prev');
+const btnNext = document.getElementById('btn-next');
+
+if (window.innerWidth >= 1024) sidebarToggleBtn.classList.add('open');
+
+menuData.forEach((item, index) => {
+  const div = document.createElement('div');
+  div.className = 'menu-item px-4 py-3 my-1 rounded-xl cursor-pointer flex items-center gap-3 transition-all text-slate-400 hover:text-white hover:bg-white/5';
+  div.id = `menu-${item.id}`;
+  div.innerHTML = `<span class="flex-shrink-0 w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-[10px] font-bold num-badge transition-colors">${index + 1}</span><span class="font-medium text-sm truncate">${item.title}</span>`;
+  div.onclick = () => goTo(item.id);
+  menuContainer.appendChild(div);
+});
+
+function goTo(id) {
+  currentIndex = menuData.findIndex(m => m.id === id);
+  sections.forEach(s => s.classList.remove('active'));
+  setTimeout(() => { document.getElementById(id).classList.add('active'); }, 10);
+  document.querySelectorAll('.menu-item').forEach(m => {
+    m.classList.remove('bg-brand-blue/20', 'text-white', 'border', 'border-brand-blue/30');
+    m.classList.add('text-slate-400');
+    m.querySelector('.num-badge').classList.remove('bg-brand-blue', 'text-white');
+    m.querySelector('.num-badge').classList.add('bg-white/5', 'text-slate-400');
+  });
+  const activeMenu = document.getElementById(`menu-${id}`);
+  if (activeMenu) {
+    activeMenu.classList.add('bg-brand-blue/20', 'text-white', 'border', 'border-brand-blue/30');
+    activeMenu.classList.remove('text-slate-400');
+    activeMenu.querySelector('.num-badge').classList.add('bg-brand-blue', 'text-white');
+    activeMenu.querySelector('.num-badge').classList.remove('bg-white/5', 'text-slate-400');
+  }
+  progressBar.style.width = `${((currentIndex + 1) / menuData.length) * 100}%`;
+  btnPrev.style.visibility = currentIndex === 0 ? 'hidden' : 'visible';
+  if (currentIndex === menuData.length - 1) {
+    btnNext.innerHTML = 'Selesai <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>';
+    btnNext.classList.remove('bg-brand-blue', 'hover:bg-indigo-700');
+    btnNext.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+    btnNext.onclick = () => goTo('s1');
+  } else {
+    btnNext.innerHTML = 'Selanjutnya <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>';
+    btnNext.classList.add('bg-brand-blue', 'hover:bg-indigo-700');
+    btnNext.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
+    btnNext.onclick = () => navStep(1);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (window.innerWidth < 1024) { sidebar.classList.add('-translate-x-full'); sidebarToggleBtn.classList.remove('open'); }
+}
+
+function navStep(step) {
+  const newIndex = currentIndex + step;
+  if (newIndex >= 0 && newIndex < menuData.length) goTo(menuData[newIndex].id);
+}
+
+goTo('s1');
+
+sidebarToggleBtn.addEventListener('click', () => {
+  if (window.innerWidth >= 1024) document.body.classList.toggle('presentation-mode');
+  else sidebar.classList.toggle('-translate-x-full');
+  sidebarToggleBtn.classList.toggle('open');
+});
+
+let currentBaseFontSize = 16;
+function changeFontSize(step) {
+  if (step === 0) currentBaseFontSize = 16;
+  else { currentBaseFontSize += step * 1.5; if (currentBaseFontSize < 14) currentBaseFontSize = 14; if (currentBaseFontSize > 22) currentBaseFontSize = 22; }
+  document.documentElement.style.fontSize = currentBaseFontSize + 'px';
+}
+
+function selectEmoji(btn) {
+  document.querySelectorAll('.emoji-btn').forEach(b => { b.classList.add('grayscale', 'opacity-50'); b.classList.remove('grayscale-0', 'opacity-100', 'scale-125', '-translate-y-2'); });
+  btn.classList.remove('grayscale', 'opacity-50'); btn.classList.add('grayscale-0', 'opacity-100', 'scale-125', '-translate-y-2');
+}
+
+function togglePresentation() {
+  document.body.classList.toggle('presentation-mode');
+  if (sidebarToggleBtn) sidebarToggleBtn.classList.toggle('open');
+}
+</script>
+
 </body>
 </html>
